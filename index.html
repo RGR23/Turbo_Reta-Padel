@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Reta Pádel Individual v34</title>
+<title>Reta Pádel Individual v35</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="turbo-icono.png">  
 <meta name="theme-color" content="#123A63">
@@ -128,7 +128,11 @@ input:hover,select:hover{border-color:#8FB2D7}input:focus,select:focus{outline:3
 /* Revision v31: ronda de inicio configurable por jugador */
 /* Revision v33: Cambiar jugadores se mueve a Rol y permite intercambios dentro de la ronda */
 /* Revision v34: intercambio directo con origen, destino y vista previa */
-.exchange-flow{display:grid;gap:16px;margin:18px 0}.exchange-step{border:1px solid #d7e0ee;border-radius:14px;padding:14px;background:#f8faff}.exchange-step-title{font-weight:800;color:#12325c;margin-bottom:9px}.exchange-step select{width:100%;padding:12px;border:1px solid #b9c9e6;border-radius:10px;background:#fff;color:#10243e;font-size:1rem}.exchange-preview{display:none;border:2px solid #8bb7ff;border-radius:14px;padding:14px;background:#eef6ff}.exchange-preview.show{display:block}.exchange-preview-title{font-weight:800;color:#084298;margin-bottom:10px}.exchange-preview-grid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}.exchange-person{padding:12px;border-radius:10px;background:#fff;border:1px solid #c9daf3;text-align:center}.exchange-person b{display:block;color:#12325c}.exchange-person span{display:block;margin-top:4px;color:#5c6f86;font-size:.9rem}.exchange-arrow{font-size:1.7rem;color:#0b5ed7;font-weight:900}.exchange-hint{margin-top:9px;color:#52657b;font-size:.9rem}@media(max-width:520px){.exchange-preview-grid{grid-template-columns:1fr}.exchange-arrow{transform:rotate(90deg);text-align:center}}
+.exchange-flow{display:grid;gap:16px;margin:18px 0}.exchange-step{border:1px solid #d7e0ee;border-radius:14px;padding:14px;background:#f8faff}.exchange-step-title{font-weight:800;color:#12325c;margin-bottom:9px}.exchange-step select{width:100%;padding:12px;border:1px solid #b9c9e6;border-radius:10px;background:#fff;color:#10243e;font-size:1rem}.exchange-preview{display:none;border:2px solid #8bb7ff;border-radius:14px;padding:14px;background:#eef6ff}.exchange-preview.show{display:block}.exchange-preview-title{font-weight:800;color:#084298;margin-bottom:10px}.exchange-preview-grid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}.exchange-person{padding:12px;border-radius:10px;background:#fff;border:1px solid #c9daf3;text-align:center}.exchange-person b{display:block;color:#12325c}.exchange-person span{display:block;margin-top:4px;color:#5c6f86;font-size:.9rem}.exchange-arrow{font-size:1.7rem;color:#0b5ed7;font-weight:900}.exchange-hint{margin-top:9px;color:#52657b;font-size:.9rem}
+/* Revision v35: validacion de companeros repetidos */
+.exchange-partner-warning{margin-top:12px;padding:12px 14px;border:1px solid #f0b429;border-left:5px solid #f0b429;border-radius:10px;background:#fff7df;color:#6c4c00;font-size:.92rem;line-height:1.45}
+.exchange-partner-warning b{color:#5a3d00}.exchange-partner-warning ul{margin:8px 0 0;padding-left:20px}.exchange-partner-warning li{margin:5px 0}
+@media(max-width:520px){.exchange-preview-grid{grid-template-columns:1fr}.exchange-arrow{transform:rotate(90deg);text-align:center}}
 </style>
 </head>
 <body>
@@ -265,21 +269,37 @@ function openPlayerEditor(rn,mi){
  $('playerEditModal').classList.add('open');
  updateExchangeTargets()
 }
+function getPlayerPartnerId(r,playerId){
+ const loc=playerLocationInRound(r,playerId);if(loc.type!=='match')return null;
+ const m=r.matches[loc.mi];
+ if(m.team1.includes(playerId))return m.team1.find(id=>id!==playerId)||null;
+ if(m.team2.includes(playerId))return m.team2.find(id=>id!==playerId)||null;
+ return null
+}
+function cloneRoundForExchange(r){return {...r,matches:r.matches.map(m=>({...m,team1:[...m.team1],team2:[...m.team2]})),rests:[...(r.rests||[])],unavailable:[...(r.unavailable||[])]}}
+function getRoundTeams(r){const teams=[];r.matches.forEach(m=>{if(m.team1.length===2)teams.push({players:[...m.team1],court:m.court});if(m.team2.length===2)teams.push({players:[...m.team2],court:m.court})});return teams}
+function findRepeatedPartnersAfterExchange(currentRound,sourceId,targetId,sourceLoc,targetLoc){
+ const simulatedRound=cloneRoundForExchange(currentRound);setRoundSlot(simulatedRound,sourceLoc,targetId);if(targetLoc.type==='match')setRoundSlot(simulatedRound,targetLoc,sourceId);
+ const affected=new Set([sourceId,targetId]),warnings=[],seen=new Set();
+ getRoundTeams(simulatedRound).forEach(newTeam=>{const [a,b]=newTeam.players;if(!affected.has(a)&&!affected.has(b))return;const key=pairKey(a,b);state.rounds.forEach(otherRound=>{if(otherRound.number===currentRound.number)return;getRoundTeams(otherRound).forEach(existing=>{if(pairKey(existing.players[0],existing.players[1])!==key)return;const warningKey=`${key}|${otherRound.number}|${existing.court}`;if(seen.has(warningKey))return;seen.add(warningKey);warnings.push({playerA:a,playerB:b,round:otherRound.number,court:existing.court})})})});
+ return warnings
+}
 function updateExchangeTargets(){
  if(!editingMatch)return;
- const r=state.rounds.find(x=>x.number===editingMatch.rn),sourceId=$('exchangeSource').value;
- if(!r)return;
- const eligible=[...new Set([...r.matches.flatMap(m=>[...m.team1,...m.team2]),...(r.rests||[])])].filter(id=>id!==sourceId);
+ const r=state.rounds.find(x=>x.number===editingMatch.rn),sourceId=$('exchangeSource').value;if(!r||!sourceId)return;
+ const currentPartnerId=getPlayerPartnerId(r,sourceId);
+ const eligible=[...new Set([...r.matches.flatMap(m=>[...m.team1,...m.team2]),...(r.rests||[])])].filter(id=>id!==sourceId&&id!==currentPartnerId);
  $('exchangeTarget').innerHTML='<option value="">Selecciona un jugador...</option>'+eligible.map(id=>exchangeOption(r,id)).join('');
  updateExchangePreview()
 }
 function updateExchangePreview(){
- const preview=$('exchangePreview'),button=$('confirmExchangeBtn');
- if(!editingMatch)return;
+ const preview=$('exchangePreview'),button=$('confirmExchangeBtn');if(!editingMatch)return;
  const r=state.rounds.find(x=>x.number===editingMatch.rn),sourceId=$('exchangeSource').value,targetId=$('exchangeTarget').value;
  if(!r||!sourceId||!targetId){preview.classList.remove('show');preview.innerHTML='';button.disabled=true;return}
  const sourceLoc=playerLocationInRound(r,sourceId),targetLoc=playerLocationInRound(r,targetId);
- preview.innerHTML=`<div class="exchange-preview-title">Vista previa del intercambio</div><div class="exchange-preview-grid"><div class="exchange-person"><b>${esc(name(sourceId))}</b><span>${esc(sourceLoc.label)}</span></div><div class="exchange-arrow">⇄</div><div class="exchange-person"><b>${esc(name(targetId))}</b><span>${esc(targetLoc.label)}</span></div></div><div class="exchange-hint">Después del cambio: ${esc(name(targetId))} ocupará el lugar de ${esc(name(sourceId))}${targetLoc.type==='match'?`, y ${esc(name(sourceId))} pasará a ${esc(targetLoc.label)}`:', y el jugador reemplazado pasará a descanso'}.</div>`;
+ const repeated=findRepeatedPartnersAfterExchange(r,sourceId,targetId,sourceLoc,targetLoc);
+ const warningHtml=repeated.length?`<div class="exchange-partner-warning"><b>Advertencia: este intercambio repetira companeros de equipo.</b><ul>${repeated.map(item=>`<li><b>${esc(name(item.playerA))}</b> volvera a jugar con <b>${esc(name(item.playerB))}</b>. Esta pareja ya aparece en <b>Ronda ${item.round}</b>, <b>${esc(courtName(item.court))}</b>.</li>`).join('')}</ul></div>`:'';
+ preview.innerHTML=`<div class="exchange-preview-title">Vista previa del intercambio</div><div class="exchange-preview-grid"><div class="exchange-person"><b>${esc(name(sourceId))}</b><span>${esc(sourceLoc.label)}</span></div><div class="exchange-arrow">⇄</div><div class="exchange-person"><b>${esc(name(targetId))}</b><span>${esc(targetLoc.label)}</span></div></div><div class="exchange-hint">Despues del cambio: ${esc(name(targetId))} ocupara el lugar de ${esc(name(sourceId))}${targetLoc.type==='match'?`, y ${esc(name(sourceId))} pasara a ${esc(targetLoc.label)}`:', y el jugador reemplazado pasara a descanso'}.</div>${warningHtml}`;
  preview.classList.add('show');button.disabled=false
 }
 function closePlayerEditor(){$('playerEditModal').classList.remove('open');editingMatch=null}
