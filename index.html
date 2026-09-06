@@ -136,6 +136,352 @@ input:hover,select:hover{border-color:#8FB2D7}input:focus,select:focus{outline:3
 
 /* v37: Captura inteligente, QR por cancha y autodeteccion */
 .smart-capture-card{margin-bottom:16px;background:linear-gradient(135deg,#eef5ff,#fff);border:1px solid #bdd0eb}.capture-modal{position:fixed;inset:0;z-index:10020;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(5,18,40,.74)}.capture-modal.open{display:flex}.capture-dialog{width:min(980px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.35)}.capture-head{display:flex;justify-content:space-between;gap:12px}.capture-head h3{margin:0}.capture-grid{display:grid;grid-template-columns:320px 1fr;gap:18px;margin-top:16px}.capture-controls{display:grid;gap:12px;align-content:start}.capture-controls select,.capture-controls input{width:100%}.capture-preview{min-height:260px;border:2px dashed #b9c9e6;border-radius:14px;background:#f7f9fc;display:flex;align-items:center;justify-content:center;overflow:hidden}.capture-preview img{max-width:100%;max-height:440px;object-fit:contain}.capture-placeholder{text-align:center;color:#607089;padding:24px}.capture-status{padding:10px 12px;border-radius:10px;background:#edf3fb;color:#183b68;font-weight:700}.capture-status.warn{background:#fff4d6;color:#6c4c00}.capture-status.ok{background:#e8f7ee;color:#17643a}.ocr-table-wrap{overflow:auto;margin-top:16px}.ocr-table{width:100%;border-collapse:collapse}.ocr-table th,.ocr-table td{border:1px solid #d7e0ee;padding:8px}.ocr-table th{background:#eaf1fb;color:#12325c}.ocr-table input{width:78px;padding:8px}.ocr-good{background:#e8f7ee}.ocr-low{background:#fff4d6}.confidence{font-size:12px;font-weight:800}.capture-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:16px}.capture-note{font-size:.89rem;color:#53657d;line-height:1.45}.capture-loader{width:18px;height:18px;border:3px solid #c9d8eb;border-top-color:#245fa8;border-radius:50%;display:inline-block;vertical-align:middle;animation:cspin .8s linear infinite}@keyframes cspin{to{transform:rotate(360deg)}}.court-qr-wrap{display:flex;align-items:center;justify-content:flex-end;gap:10px}.court-qr{width:84px;height:84px;background:#fff;padding:4px;border-radius:7px}.court-qr img,.court-qr canvas{width:76px!important;height:76px!important;display:block}.court-qr-label{font-size:10px;line-height:1.2;text-align:center;letter-spacing:0}.court-sheet-head{grid-template-columns:20% 40% 40%}.auto-court-badge{display:inline-block;margin-top:6px;padding:4px 8px;border-radius:999px;background:#dcecff;color:#174b82;font-size:12px;font-weight:900}@media(max-width:760px){.capture-grid{grid-template-columns:1fr}.capture-dialog{padding:15px}.court-sheet-head{grid-template-columns:1fr}.court-qr-wrap{justify-content:center}.ocr-table{font-size:12px}}@media print{.smart-capture-card,.capture-modal{display:none!important}.court-qr{break-inside:avoid}}
+
+/* v38: encabezado estable para Rol por cancha en Imprimir/PDF combinado */
+@media print {
+  body.print-combined-role #courtSchedule .court-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-sheet-head {
+    display: grid !important;
+    grid-template-columns: minmax(25mm,18%) minmax(0,1fr) minmax(62mm,36%) !important;
+    grid-template-areas: "brand title details" !important;
+    align-items: center !important;
+    column-gap: 5mm !important;
+    width: 100% !important;
+    min-height: 31mm !important;
+    padding: 3.5mm 5mm !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+    background: linear-gradient(105deg,#123A63,#245FA8) !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-brand {
+    grid-area: brand !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body.print-combined-role #courtSchedule .print-logo {
+    display: block !important;
+    width: 23mm !important;
+    height: 23mm !important;
+    max-width: 100% !important;
+    max-height: 23mm !important;
+    object-fit: contain !important;
+    margin: 0 auto !important;
+    flex: 0 0 auto !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-title {
+    grid-area: title !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    font-size: clamp(18px,2.35vw,30px) !important;
+    line-height: 1.08 !important;
+    font-weight: 950 !important;
+    text-align: left !important;
+    text-transform: uppercase !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-qr-wrap {
+    grid-area: details !important;
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) 23mm !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    gap: 3mm !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-event {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    text-align: right !important;
+    font-size: 12px !important;
+    line-height: 1.22 !important;
+    font-weight: 800 !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-qr {
+    width: 23mm !important;
+    height: 23mm !important;
+    min-width: 23mm !important;
+    padding: 1mm !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border-radius: 2mm !important;
+    background: #fff !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-qr img,
+  body.print-combined-role #courtSchedule .court-qr canvas {
+    display: block !important;
+    width: 21mm !important;
+    height: 21mm !important;
+    max-width: 21mm !important;
+    max-height: 21mm !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-role-scroll {
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    margin-top: 0 !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-table thead {
+    display: table-header-group !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-table tr,
+  body.print-combined-role #courtSchedule .court-table th,
+  body.print-combined-role #courtSchedule .court-table td {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-table th {
+    background: linear-gradient(105deg,#123A63,#245FA8) !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-table .points-cell {
+    background: #f4f7fa !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.print-combined-role #courtSchedule .court-table .vs-cell {
+    background: #eef3f8 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+
+/* v38.6 - Encabezado responsivo y protegido para Clasificacion */
+.classification-head{overflow:hidden}
+.classification-logo,.classification-title,.classification-event{min-width:0}
+.classification-title,.classification-event{overflow-wrap:anywhere;word-break:normal}
+@media (min-width:761px) and (max-width:980px){
+ .classification-head{grid-template-columns:minmax(96px,18%) minmax(0,44%) minmax(190px,38%)!important;gap:12px!important;padding:12px 14px!important}
+ .classification-title{font-size:clamp(20px,3vw,27px)!important}
+ .classification-event{font-size:clamp(11px,1.6vw,14px)!important}
+}
+@media (max-width:760px){
+ .classification-head{display:grid!important;grid-template-columns:1fr!important;gap:9px!important;padding:14px 12px!important;text-align:center!important}
+ .classification-logo,.classification-title,.classification-event{text-align:center!important;justify-content:center!important}
+ .classification-title{font-size:24px!important;line-height:1.1!important}
+ .classification-event{line-height:1.3!important;max-width:100%!important}
+}
+@media print{
+ body.print-classification .classification-sheet{width:100%!important;overflow:hidden!important;page-break-inside:avoid!important}
+ body.print-classification .classification-head{
+  display:grid!important;grid-template-columns:minmax(25mm,18%) minmax(0,1fr) minmax(58mm,35%)!important;
+  align-items:center!important;column-gap:5mm!important;min-height:31mm!important;
+  padding:3.5mm 5mm!important;overflow:hidden!important;page-break-inside:avoid!important;
+ }
+ body.print-classification .classification-title{
+  font-size:clamp(18px,2.35vw,30px)!important;line-height:1.08!important;
+  overflow-wrap:anywhere!important;text-align:left!important;
+ }
+ body.print-classification .classification-event{
+  font-size:12px!important;line-height:1.22!important;text-align:right!important;
+  overflow-wrap:anywhere!important;
+ }
+ body.print-classification .classification-table{width:100%!important;table-layout:fixed!important}
+ body.print-classification .classification-table tr,
+ body.print-classification .classification-table th,
+ body.print-classification .classification-table td{page-break-inside:avoid!important}
+}
+
+
+/* v38.6 - Restaura la correccion responsiva de Rol por Jugador de v38.2 */
+.player-sheet-head{overflow:hidden!important}
+.player-brand,.player-title,.player-event{min-width:0!important}
+.player-title,.player-event{overflow-wrap:anywhere!important;word-break:normal!important}
+
+@media (min-width:761px) and (max-width:980px){
+  .player-sheet-head{
+    grid-template-columns:minmax(96px,18%) minmax(0,44%) minmax(190px,38%)!important;
+    gap:12px!important;
+    padding:12px 14px!important;
+  }
+  .player-title{font-size:clamp(20px,3vw,27px)!important;line-height:1.08!important}
+  .player-event{font-size:clamp(11px,1.6vw,14px)!important;line-height:1.25!important}
+  .player-sheet-head .print-logo{width:72px!important;height:72px!important;max-width:100%!important}
+}
+
+@media (max-width:760px){
+  .player-sheet-head{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-areas:"player-logo" "player-title" "player-event"!important;
+    gap:9px!important;
+    min-height:0!important;
+    padding:14px 12px!important;
+    text-align:center!important;
+  }
+  .player-brand{grid-area:player-logo!important;justify-content:center!important}
+  .player-title{grid-area:player-title!important;text-align:center!important;font-size:24px!important;line-height:1.1!important}
+  .player-event{grid-area:player-event!important;text-align:center!important;line-height:1.3!important;max-width:100%!important}
+  .player-sheet-head .print-logo{width:72px!important;height:72px!important;max-width:100%!important}
+}
+
+@media print{
+  body.print-combined-role #playerSchedule .player-sheet{
+    width:100%!important;max-width:100%!important;overflow:hidden!important;
+    break-inside:avoid-page!important;page-break-inside:avoid!important;
+  }
+  body.print-combined-role #playerSchedule .player-sheet-head{
+    display:grid!important;
+    grid-template-columns:minmax(25mm,18%) minmax(0,1fr) minmax(58mm,35%)!important;
+    grid-template-areas:"player-logo player-title player-event"!important;
+    align-items:center!important;column-gap:5mm!important;width:100%!important;
+    min-height:31mm!important;padding:3.5mm 5mm!important;margin:0!important;
+    overflow:hidden!important;break-inside:avoid!important;page-break-inside:avoid!important;
+    break-after:avoid!important;page-break-after:avoid!important;
+    background:linear-gradient(105deg,#123A63,#245FA8)!important;color:#fff!important;
+    -webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;
+  }
+  body.print-combined-role #playerSchedule .player-brand{
+    grid-area:player-logo!important;display:flex!important;align-items:center!important;
+    justify-content:center!important;min-width:0!important;overflow:hidden!important;
+  }
+  body.print-combined-role #playerSchedule .print-logo{
+    display:block!important;width:23mm!important;height:23mm!important;
+    max-width:100%!important;max-height:23mm!important;object-fit:contain!important;margin:0 auto!important;
+  }
+  body.print-combined-role #playerSchedule .player-title{
+    grid-area:player-title!important;min-width:0!important;max-width:100%!important;margin:0!important;
+    overflow:hidden!important;font-size:clamp(18px,2.35vw,30px)!important;line-height:1.08!important;
+    font-weight:950!important;text-align:left!important;text-transform:uppercase!important;
+    overflow-wrap:anywhere!important;word-break:normal!important;
+  }
+  body.print-combined-role #playerSchedule .player-event{
+    grid-area:player-event!important;min-width:0!important;max-width:100%!important;margin:0!important;
+    text-align:right!important;font-size:12px!important;line-height:1.22!important;font-weight:800!important;
+    overflow-wrap:anywhere!important;word-break:normal!important;
+  }
+  body.print-combined-role #playerSchedule .player-role-scroll{width:100%!important;overflow:visible!important;padding:0!important;margin:0!important}
+  body.print-combined-role #playerSchedule .player-role-table{width:100%!important;min-width:0!important;table-layout:fixed!important;border-collapse:collapse!important;margin-top:0!important}
+  body.print-combined-role #playerSchedule .player-role-table thead{display:table-header-group!important}
+  body.print-combined-role #playerSchedule .player-role-table tr,
+  body.print-combined-role #playerSchedule .player-role-table th,
+  body.print-combined-role #playerSchedule .player-role-table td{break-inside:avoid!important;page-break-inside:avoid!important}
+}
+
+
+/* v38.6 - Clasificacion colores PDF y eliminar primera hoja en blanco */
+@media print {
+ body.print-classification .classification-head,
+ body.print-classification .classification-table,
+ body.print-classification .classification-table *,
+ body.print-classification .classification-table .leader,
+ body.print-classification .classification-table .rank,
+ body.print-classification .classification-table .avg-highlight {
+   -webkit-print-color-adjust: exact !important;
+   print-color-adjust: exact !important;
+   color-adjust: exact !important;
+ }
+ body.print-classification .classification-table .leader{background:#FFF4CC !important;}
+ body.print-classification .classification-table .rank{background:#EEF3F8 !important;}
+ body.print-classification .classification-table tbody td.avg-highlight{background:#0B5ED7 !important;color:#FFF !important;box-shadow:inset 0 0 0 1px #084298 !important;}
+ body.print-classification .classification-table th{background:linear-gradient(105deg,#123A63,#245FA8) !important;color:#FFF !important;}
+
+ body.print-combined-role #playerRoleView,
+ body.print-combined-role #courtRoleView{
+   break-before:auto !important;page-break-before:auto !important;
+   break-after:auto !important;page-break-after:auto !important;
+ }
+ body.print-combined-role #playerSchedule{
+   break-after:page !important;page-break-after:always !important;
+ }
+ body.print-combined-role #courtSchedule{break-before:auto !important;page-break-before:auto !important;}
+ body.print-combined-role #courtSchedule > :empty{display:none !important;}
+ body.print-combined-role #courtSchedule .court-sheet:first-child{
+   break-before:auto !important;page-break-before:auto !important;
+ }
+}
+
+
+/* v38.6 - Correccion definitiva PDF combinado */
+@media print{
+  /* Evita pagina inicial en blanco */
+  body.print-combined-role #playerRoleView,
+  body.print-combined-role #courtRoleView,
+  body.print-combined-role #playerSchedule,
+  body.print-combined-role #courtSchedule{
+      break-before:auto !important;
+      page-break-before:auto !important;
+  }
+
+  body.print-combined-role #playerRoleView{
+      margin:0 !important;
+      padding:0 !important;
+  }
+
+  body.print-combined-role #playerSchedule .player-sheet:first-child{
+      break-before:auto !important;
+      page-break-before:auto !important;
+  }
+
+  /* Mantener azul original de Clasificacion */
+  body.print-classification .classification-head,
+  body.print-classification .classification-table thead th{
+      background:#245FA8 !important;
+      background-image:none !important;
+      color:#FFFFFF !important;
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+      color-adjust:exact !important;
+  }
+
+  body.print-classification .classification-head * ,
+  body.print-classification .classification-table thead th *{
+      color:#FFFFFF !important;
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+  }
+}
+
 </style>
 </head>
 <body>
