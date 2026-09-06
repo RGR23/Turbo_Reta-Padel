@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Reta Pádel Individual v37</title>
+<title>Reta Pádel Individual v38.7</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="turbo-icono.png">  
 <meta name="theme-color" content="#123A63">
@@ -482,6 +482,48 @@ input:hover,select:hover{border-color:#8FB2D7}input:focus,select:focus{outline:3
   }
 }
 
+
+
+/* v38.7 - Compatibilidad de Imprimir/PDF Combinado con Safari/iPhone */
+@media print {
+  html, body { height:auto !important; min-height:0 !important; overflow:visible !important; }
+  body.print-combined-role {
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+  body.print-combined-role #schedule,
+  body.print-combined-role #schedule > .card,
+  body.print-combined-role #playerRoleView,
+  body.print-combined-role #courtRoleView,
+  body.print-combined-role #playerSchedule,
+  body.print-combined-role #courtSchedule {
+    overflow:visible !important;
+    height:auto !important;
+    min-height:0 !important;
+  }
+  /* Un solo salto entre secciones evita la hoja vacia que Safari puede crear
+     cuando coinciden break-after y break-before en el mismo limite. */
+  body.print-combined-role #playerRoleView {
+    break-after:page !important;
+    page-break-after:always !important;
+  }
+  body.print-combined-role #courtRoleView {
+    break-before:auto !important;
+    page-break-before:auto !important;
+  }
+  body.print-combined-role table { page-break-inside:auto; break-inside:auto; }
+  body.print-combined-role thead { display:table-header-group; }
+  body.print-combined-role tfoot { display:table-footer-group; }
+  body.print-combined-role tr {
+    page-break-inside:avoid !important;
+    break-inside:avoid-page !important;
+  }
+  body.print-combined-role .player-sheet,
+  body.print-combined-role .court-sheet {
+    page-break-inside:avoid !important;
+    break-inside:avoid-page !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -579,16 +621,53 @@ function printClassification(){const previousTitle=document.title;document.title
 function safeFilePart(value,fallback){return String(value||fallback).trim().replace(/[\\/:*?"<>|]+/g,'').replace(/\s+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||fallback}
 function printCombinedRole(){
  const player=$('playerRoleView'),court=$('courtRoleView');
+ if(!player||!court)return;
  const previousPlayer=player.style.display,previousCourt=court.style.display,previousTitle=document.title;
  const eventName=safeFilePart(state.config.eventName,'Evento');
  const category=safeFilePart(state.config.category,'Categoria');
+ let restored=false,focusTimer=null,fallbackTimer=null;
+ const printMedia=window.matchMedia?window.matchMedia('print'):null;
+ const restore=()=>{
+  if(restored)return;
+  restored=true;
+  if(focusTimer)clearTimeout(focusTimer);
+  if(fallbackTimer)clearTimeout(fallbackTimer);
+  document.title=previousTitle;
+  document.body.classList.remove('print-combined-role');
+  player.style.display=previousPlayer;
+  court.style.display=previousCourt;
+  window.removeEventListener('afterprint',restore);
+  window.removeEventListener('focus',restoreAfterReturn);
+  document.removeEventListener('visibilitychange',restoreWhenVisible);
+  if(printMedia){
+   if(printMedia.removeEventListener)printMedia.removeEventListener('change',printMediaChanged);
+   else if(printMedia.removeListener)printMedia.removeListener(printMediaChanged);
+  }
+ };
+ const restoreAfterReturn=()=>{
+  if(!document.body.classList.contains('print-combined-role'))return;
+  focusTimer=setTimeout(restore,700);
+ };
+ const restoreWhenVisible=()=>{if(document.visibilityState==='visible')restoreAfterReturn()};
+ const printMediaChanged=e=>{if(!e.matches)restoreAfterReturn()};
  document.title=`${eventName}_Rol_${category}`;
  document.body.classList.add('print-combined-role');
- player.style.display='block';court.style.display='block';
- const restore=()=>{document.title=previousTitle;document.body.classList.remove('print-combined-role');player.style.display=previousPlayer;court.style.display=previousCourt;window.removeEventListener('afterprint',restore)};
- window.addEventListener('afterprint',restore);
- setTimeout(()=>window.print(),120);
- setTimeout(()=>{if(document.body.classList.contains('print-combined-role'))restore()},3000);
+ player.style.display='block';
+ court.style.display='block';
+ window.addEventListener('afterprint',restore,{once:true});
+ window.addEventListener('focus',restoreAfterReturn);
+ document.addEventListener('visibilitychange',restoreWhenVisible);
+ if(printMedia){
+  if(printMedia.addEventListener)printMedia.addEventListener('change',printMediaChanged);
+  else if(printMedia.addListener)printMedia.addListener(printMediaChanged);
+ }
+ /* Fuerza el reflujo y espera dos cuadros para que WebKit prepare ambas vistas. */
+ void document.body.offsetHeight;
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  try{window.print()}catch(error){console.error('No fue posible abrir la impresion:',error);restore()}
+ }));
+ /* Respaldo tardio: no desmonta la vista mientras iOS mantiene abierto Compartir/Imprimir. */
+ fallbackTimer=setTimeout(restore,60000);
 }
 function showRoleView(v){roleView=v;$('playerRoleView').style.display=v==='player'?'block':'none';$('courtRoleView').style.display=v==='court'?'block':'none'}
 function renderSchedule(){const summary=$('scheduleSummary'), ps=$('playerSchedule'), cards=$('roundCards');if(!state.rounds.length){summary.innerHTML='';ps.innerHTML='<div class="empty">Todavía no se ha generado un rol.</div>';cards.innerHTML='';return}summary.innerHTML=`<div class="kpis"><div class="kpi"><b>${state.players.length}</b>Jugadores</div><div class="kpi"><b>${state.rounds.length}</b>Rondas</div><div class="kpi"><b>${Math.max(...state.rounds.map(r=>r.matches.length))}</b>Canchas máx.</div><div class="kpi"><b>${state.config.minutes}</b>Minutos</div></div>`;
