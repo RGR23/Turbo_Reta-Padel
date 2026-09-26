@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Reta Pádel Individual v39.6</title>
+<title>Reta Pádel Individual v41.5</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="turbo-icono.png">  
 <meta name="theme-color" content="#123A63">
@@ -49,7 +49,7 @@ main{padding:22px 18px 70px}.panel{display:none}.panel.active{display:block}.car
   body.print-combined-role #scheduleSummary { display:none !important; }
 }
 
-.classification-sheet{border:2px solid #245d9d;border-radius:14px;overflow:hidden;background:#fff}.classification-head{display:grid;grid-template-columns:18% 47% 35%;align-items:center;background:#245fa8;color:white;padding:14px 18px;min-height:100px}.classification-logo{display:flex;align-items:center;justify-content:center}.classification-title{font-size:30px;font-weight:950;text-transform:uppercase}.classification-event{text-align:right;font-weight:800;line-height:1.35}.classification-table{width:100%;border-collapse:collapse;min-width:0}.classification-table th{background:#245fa8;color:white;text-align:center;border:1px solid #8ba9c7;padding:9px 6px}.classification-table td{border:1px solid #8ba9c7;text-align:center;padding:9px 6px;font-weight:750;white-space:normal}.classification-table .rank{font-size:18px;font-weight:950;background:#eef3f8}.classification-table .leader{background:#fff4cc}.classification-table .name{text-align:left;font-weight:900;padding-left:12px}.classification-table .points{font-size:inherit;font-weight:900;color:inherit;font-family:inherit}
+.classification-sheet{border:2px solid #245d9d;border-radius:14px;overflow:hidden;background:#fff}.classification-head{display:grid;grid-template-columns:18% 47% 35%;align-items:center;background:#245fa8;color:white;padding:14px 18px;min-height:100px}.classification-logo{display:flex;align-items:center;justify-content:center}.classification-title{font-size:30px;font-weight:950;text-transform:uppercase}.classification-event{text-align:right;font-weight:800;line-height:1.35}.classification-table{width:100%;border-collapse:collapse;min-width:0}.classification-table th{background:#245fa8;color:white;text-align:center;border:1px solid #8ba9c7;padding:9px 6px}.classification-table td{border:1px solid #8ba9c7;text-align:center;padding:9px 6px;font-weight:800;white-space:normal}.classification-table .rank{font-size:18px;font-weight:950;background:#eef3f8}.classification-table .leader{background:#fff4cc}.classification-table .name{text-align:left;font-weight:900;padding-left:12px}.classification-table .points{font-size:inherit;font-weight:800;color:inherit;font-family:inherit}
 @media(max-width:760px){.classification-head{grid-template-columns:1fr;text-align:center;gap:8px}.classification-title,.classification-event{text-align:center}.classification-title{font-size:24px}.classification-table{font-size:12px}.classification-table td,.classification-table th{padding:6px 4px}}
 @media print{body.print-classification #standings{display:block!important}body.print-classification #standingsKpis{display:none!important}body.print-classification .classification-sheet{border-radius:0;margin:0}body.print-classification .classification-head,body.print-classification .classification-table th{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#245fa8!important}body.print-classification .classification-table .leader,body.print-classification .classification-table .rank{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 
@@ -524,6 +524,364 @@ input:hover,select:hover{border-color:#8FB2D7}input:focus,select:focus{outline:3
     break-inside:avoid-page !important;
   }
 }
+
+  /* v39.7 - Impresion/PDF combinado estable para Safari/iPhone iOS 27 */
+  @media print {
+    html, body {
+      width:100% !important;
+      height:auto !important;
+      min-height:0 !important;
+      overflow:visible !important;
+    }
+    body.print-combined-role #playerRoleView,
+    body.print-combined-role #courtRoleView,
+    body.print-combined-role #playerSchedule,
+    body.print-combined-role #courtSchedule {
+      display:block !important;
+      position:static !important;
+      width:100% !important;
+      height:auto !important;
+      min-height:0 !important;
+      overflow:visible !important;
+      break-before:auto !important;
+      page-break-before:auto !important;
+      break-after:auto !important;
+      page-break-after:auto !important;
+    }
+    body.print-combined-role #playerSchedule {
+      break-after:page !important;
+      page-break-after:always !important;
+    }
+    body.print-combined-role #courtSchedule {
+      break-before:auto !important;
+      page-break-before:auto !important;
+    }
+    body.print-combined-role #playerSchedule .player-sheet:first-child,
+    body.print-combined-role #courtSchedule .court-sheet:first-child {
+      break-before:auto !important;
+      page-break-before:auto !important;
+    }
+    body.print-combined-role #playerSchedule .player-sheet:last-child,
+    body.print-combined-role #courtSchedule .court-sheet:last-child {
+      break-after:auto !important;
+      page-break-after:auto !important;
+    }
+    body.print-combined-role #roundCards,
+    body.print-combined-role #scheduleSummary,
+    body.print-combined-role .no-print {
+      display:none !important;
+    }
+  }
+
+  /* v39.8 - Elimina la primera hoja vacia en PDF combinado */
+  @media print {
+    /* La tarjeta contiene las dos secciones combinadas y supera una pagina.
+       La regla global .card { break-inside:avoid } hacia que el navegador
+       desplazara la tarjeta completa y dejara la primera hoja vacia. */
+    body.print-combined-role #schedule,
+    body.print-combined-role #schedule > .card {
+      display:block !important;
+      position:static !important;
+      width:100% !important;
+      height:auto !important;
+      min-height:0 !important;
+      margin:0 !important;
+      padding:0 !important;
+      border:0 !important;
+      border-radius:0 !important;
+      box-shadow:none !important;
+      overflow:visible !important;
+      break-before:auto !important;
+      page-break-before:auto !important;
+      break-after:auto !important;
+      page-break-after:auto !important;
+      break-inside:auto !important;
+      page-break-inside:auto !important;
+    }
+    body.print-combined-role #playerRoleView,
+    body.print-combined-role #playerSchedule,
+    body.print-combined-role #playerSchedule .player-sheet:first-child {
+      margin-top:0 !important;
+      padding-top:0 !important;
+      break-before:auto !important;
+      page-break-before:auto !important;
+    }
+    /* El salto se aplica solamente despues del contenido por jugador. */
+    body.print-combined-role #playerRoleView {
+      break-after:auto !important;
+      page-break-after:auto !important;
+    }
+    body.print-combined-role #playerSchedule {
+      break-after:page !important;
+      page-break-after:always !important;
+    }
+    body.print-combined-role #courtRoleView,
+    body.print-combined-role #courtSchedule,
+    body.print-combined-role #courtSchedule .court-sheet:first-child {
+      break-before:auto !important;
+      page-break-before:auto !important;
+    }
+  }
+
+/* v39.9 - elimina contenedor .card del arbol de impresion combinado */
+@media print {
+  body.print-combined-role #schedule > .card{
+    display:contents !important;
+    border:0 !important;
+    padding:0 !important;
+    margin:0 !important;
+    box-shadow:none !important;
+    background:transparent !important;
+    break-inside:auto !important;
+    page-break-inside:auto !important;
+  }
+  body.print-combined-role #playerRoleView,
+  body.print-combined-role #playerSchedule{
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+  }
+  body.print-combined-role #playerRoleView .actions,
+  body.print-combined-role #courtRoleView .actions{
+    display:none !important;
+  }
+}
+
+/* v40.0 - DOM temporal aislado para Imprimir/PDF combinado */
+#combinedPrintContainer{display:none}
+@media print {
+  body.print-combined-isolated > *:not(#combinedPrintContainer){display:none !important}
+  body.print-combined-isolated #combinedPrintContainer{
+    display:block !important;
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+    overflow:visible !important;
+    background:#fff !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .combined-print-player,
+  body.print-combined-isolated #combinedPrintContainer .combined-print-court{
+    display:block !important;
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+    overflow:visible !important;
+    break-before:auto !important;
+    page-break-before:auto !important;
+    break-after:auto !important;
+    page-break-after:auto !important;
+    break-inside:auto !important;
+    page-break-inside:auto !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .player-sheet,
+  body.print-combined-isolated #combinedPrintContainer .court-sheet{
+    height:auto !important;
+    min-height:0 !important;
+    margin:0 !important;
+    overflow:visible !important;
+    break-before:auto !important;
+    page-break-before:auto !important;
+    break-inside:auto !important;
+    page-break-inside:auto !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .combined-print-player{
+    break-after:page !important;
+    page-break-after:always !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .combined-print-court{
+    break-before:auto !important;
+    page-break-before:auto !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .player-sheet:first-child,
+  body.print-combined-isolated #combinedPrintContainer .court-sheet:first-child{
+    margin-top:0 !important;
+    break-before:auto !important;
+    page-break-before:auto !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .player-sheet:last-child,
+  body.print-combined-isolated #combinedPrintContainer .court-sheet:last-child{
+    break-after:auto !important;
+    page-break-after:auto !important;
+  }
+}
+
+/* v40.1 - una tabla completa por pagina en PDF combinado */
+@media print {
+  @page { size:landscape; margin:8mm; }
+  body.print-combined-isolated #combinedPrintContainer{
+    width:auto !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .combined-print-page{
+    display:block !important;
+    position:relative !important;
+    width:277mm !important;
+    height:190mm !important;
+    min-height:190mm !important;
+    max-height:190mm !important;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+    overflow:hidden !important;
+    break-before:auto !important;
+    page-break-before:auto !important;
+    break-after:page !important;
+    page-break-after:always !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .combined-print-page:last-child{
+    break-after:auto !important;
+    page-break-after:auto !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .combined-print-frame{
+    position:absolute !important;
+    left:0 !important;
+    top:0 !important;
+    width:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    transform:scale(var(--fit-scale,1)) !important;
+    transform-origin:top left !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .combined-print-sheet{
+    display:block !important;
+    width:100% !important;
+    max-width:none !important;
+    height:auto !important;
+    min-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+    break-before:auto !important;
+    page-break-before:auto !important;
+    break-after:auto !important;
+    page-break-after:auto !important;
+    break-inside:avoid !important;
+    page-break-inside:avoid !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .player-role-scroll,
+  body.print-combined-isolated #combinedPrintContainer .court-role-scroll{
+    width:100% !important;
+    overflow:visible !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer table{
+    width:100% !important;
+    min-width:0 !important;
+    table-layout:fixed !important;
+    margin:0 !important;
+  }
+}
+
+/* v40.2 - medicion real previa para evitar recorte de tablas */
+body.print-combined-isolated #combinedPrintContainer{
+  display:block;
+  position:fixed;
+  left:-20000px;
+  top:0;
+  width:277mm;
+  margin:0;
+  padding:0;
+}
+body.print-combined-isolated #combinedPrintContainer .combined-print-page{
+  display:block;
+  position:relative;
+  width:277mm;
+  height:190mm;
+  min-height:190mm;
+  max-height:190mm;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+}
+body.print-combined-isolated #combinedPrintContainer .combined-print-frame{
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  margin:0;
+  padding:0;
+  transform:scale(var(--fit-scale,1));
+  transform-origin:top left;
+}
+body.print-combined-isolated #combinedPrintContainer .combined-print-sheet{
+  display:block;
+  width:100%;
+  max-width:none;
+  height:auto;
+  min-height:0;
+  margin:0;
+  padding:0;
+  overflow:visible;
+}
+@media print {
+  body.print-combined-isolated #combinedPrintContainer{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}
+
+/* v40.3 - ajuste y centrado para hoja Carta horizontal */
+@media print {
+  @page { size:letter landscape; margin:8mm; }
+}
+body.print-combined-isolated #combinedPrintContainer{
+  width:263.4mm;
+}
+body.print-combined-isolated #combinedPrintContainer .combined-print-page{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:263.4mm;
+  height:199.4mm;
+  min-height:199.4mm;
+  max-height:199.4mm;
+  overflow:hidden;
+}
+body.print-combined-isolated #combinedPrintContainer .combined-print-frame{
+  position:relative;
+  left:auto;
+  top:auto;
+  width:100%;
+  flex:0 0 100%;
+  transform:scale(var(--fit-scale,1));
+  transform-origin:center center;
+}
+@media print {
+  body.print-combined-isolated #combinedPrintContainer{
+    width:263.4mm !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .combined-print-page{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:263.4mm !important;
+    height:199.4mm !important;
+    min-height:199.4mm !important;
+    max-height:199.4mm !important;
+    overflow:hidden !important;
+  }
+  body.print-combined-isolated #combinedPrintContainer .combined-print-frame{
+    position:relative !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    flex:0 0 100% !important;
+    transform:scale(var(--fit-scale,1)) !important;
+    transform-origin:center center !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -617,57 +975,189 @@ function roundTimeRange(r){const roundNumber=typeof r==='object'&&r!==null?Numbe
 function timeFor(r){return roundTimeRange(r)}
 function courtName(n){return state.config['court'+n]||'Cancha '+n}
 let roleView='player';
-function printClassification(){const previousTitle=document.title;document.title=`${safeFilePart(state.config.eventName,'Evento')}_Clasificacion_${safeFilePart(state.config.category,'Categoria')}`;document.body.classList.add('print-classification');const restore=()=>{document.title=previousTitle;document.body.classList.remove('print-classification');window.removeEventListener('afterprint',restore)};window.addEventListener('afterprint',restore);setTimeout(()=>window.print(),120);setTimeout(()=>{if(document.body.classList.contains('print-classification'))restore()},3000)}
-function safeFilePart(value,fallback){return String(value||fallback).trim().replace(/[\\/:*?"<>|]+/g,'').replace(/\s+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||fallback}
-function printCombinedRole(){
- const player=$('playerRoleView'),court=$('courtRoleView');
- if(!player||!court)return;
- const previousPlayer=player.style.display,previousCourt=court.style.display,previousTitle=document.title;
+let classificationPrintInProgress=false;
+function printClassification(){
+ if(classificationPrintInProgress)return;
+ const source=document.querySelector('#standingsTable .classification-sheet');
+ if(!source){console.error('No hay clasificacion para imprimir.');return;}
+ classificationPrintInProgress=true;
+ const previousTitle=document.title;
  const eventName=safeFilePart(state.config.eventName,'Evento');
  const category=safeFilePart(state.config.category,'Categoria');
- let restored=false,focusTimer=null,fallbackTimer=null;
- const printMedia=window.matchMedia?window.matchMedia('print'):null;
+ document.title=`${eventName}_Clasificacion_${category}`;
+ const iframe=document.createElement('iframe');
+ iframe.id='classificationPrintFrame';
+ iframe.setAttribute('title','Vista de impresion de clasificacion');
+ iframe.style.position='fixed';
+ iframe.style.left='-20000px';
+ iframe.style.top='0';
+ iframe.style.width='1054px';
+ iframe.style.height='798px';
+ iframe.style.border='0';
+ const logo=source.querySelector('.print-logo');
+ const logoSrc=logo?logo.src:'';
+ const sourceTable=source.querySelector('.classification-table');
+ const headerCells=sourceTable?[...sourceTable.querySelectorAll('thead th')]:[];
+ const totalHeaderWidth=headerCells.reduce((sum,cell)=>sum+cell.getBoundingClientRect().width,0)||1;
+ const colgroup=`<colgroup>${headerCells.map(cell=>`<col style="width:${(cell.getBoundingClientRect().width/totalHeaderWidth*100).toFixed(4)}%">`).join('')}</colgroup>`;
+ const sourceRect=source.getBoundingClientRect();
+ const sourceHead=source.querySelector('.classification-head');
+ const sourceTableRect=sourceTable?sourceTable.getBoundingClientRect():{width:sourceRect.width};
+ const sourceFont=getComputedStyle(sourceTable||source).fontFamily;
+ let html=source.outerHTML.replace(/src="[^"]*" alt="Logo TURBO"/,`src="${logoSrc}" alt="Logo TURBO"`);
+ html=html.replace('<thead>',`${colgroup}<thead>`);
+ const extractClassificationCss=()=>{
+  const keepRule=rule=>{
+   const text=rule.cssText||'';
+   return /classification|print-logo|:root|\*\s*\{|body\s*\{/.test(text)&&!/^@media\s+print/i.test(text);
+  };
+  const collected=[];
+  for(const sheet of [...document.styleSheets]){
+   let rules;
+   try{rules=[...sheet.cssRules]}catch(error){continue;}
+   for(const rule of rules){
+    if(rule.type===CSSRule.STYLE_RULE&&keepRule(rule))collected.push(rule.cssText);
+    else if(rule.type===CSSRule.MEDIA_RULE&&!/print/i.test(rule.conditionText||'')&&/classification/i.test(rule.cssText||''))collected.push(rule.cssText);
+   }
+  }
+  return collected.join('\n');
+ };
+ const originalClassificationCss=extractClassificationCss();
+ const css=`
+  ${originalClassificationCss}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;width:100%;height:100%;background:#fff;color:#15263A;font-family:${sourceFont}}
+  .print-page{width:263.4mm;height:199.4mm;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0;padding:0}
+  .print-frame{width:auto}.classification-scroll{transform:none!important;transform-origin:top center}
+  .classification-sheet{width:100%!important;max-width:100%!important;margin:0!important}
+  .classification-head{height:auto!important;min-height:100px!important;overflow:visible!important}
+  .classification-head{display:grid!important;grid-template-columns:18% 47% 35%!important;align-items:center!important}
+  .classification-head>*{visibility:visible!important;opacity:1!important;overflow:visible!important}
+  .classification-title{display:block!important;visibility:visible!important;opacity:1!important}
+  .classification-event{display:block!important;visibility:visible!important;opacity:1!important}
+  .classification-scroll{overflow:visible!important;padding-bottom:0!important;scrollbar-width:none!important}
+  .classification-scroll::-webkit-scrollbar{display:none!important}
+  .classification-table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important}
+  .classification-table th,.classification-table td{font-weight:800!important}
+  .classification-table .points{font-weight:800!important}
+  @page{size:letter landscape;margin:8mm}
+  @media print{
+   html,body{width:263.4mm;height:199.4mm;overflow:hidden}
+   .print-page{width:263.4mm;height:199.4mm}
+   .classification-head,.classification-table th,.classification-table td{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  }
+ `
+ iframe.srcdoc=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${document.title}</title><style>${css}</style></head><body><main class="print-page"><div class="print-frame">${html}</div></main><script>
+  window.addEventListener('load',async()=>{
+   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+   const images=[...document.images];
+   await Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(r=>{img.onload=r;img.onerror=r})));
+   const page=document.querySelector('.print-page');
+   const frame=document.querySelector('.print-frame');
+   const sheet=document.querySelector('.classification-sheet');
+   const scroll=document.querySelector('.classification-scroll');
+   const table=document.querySelector('.classification-table');
+   const pageWidth=Math.max(1,page.clientWidth-4);
+   frame.style.width=pageWidth+'px';
+   sheet.style.width=pageWidth+'px';
+   sheet.style.maxWidth=pageWidth+'px';
+   scroll.style.width='100%';
+   scroll.style.maxWidth='100%';
+   scroll.style.transform='none';
+   table.style.width='100%';
+   table.style.minWidth='0';
+   table.style.maxWidth='100%';
+   requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()));
+  });
+  window.addEventListener('afterprint',()=>parent.postMessage('classification-print-finished','*'));
+ <\/script></body></html>`;
+ const cleanup=()=>{
+  window.removeEventListener('message',onMessage);
+  document.title=previousTitle;
+  iframe.remove();
+  classificationPrintInProgress=false;
+ };
+ const onMessage=e=>{if(e.source===iframe.contentWindow&&e.data==='classification-print-finished')cleanup()};
+ window.addEventListener('message',onMessage);
+ document.body.appendChild(iframe);
+ setTimeout(()=>{if(classificationPrintInProgress)cleanup()},120000);
+}
+function safeFilePart(value,fallback){return String(value||fallback).trim().replace(/[\\/:*?"<>|]+/g,'').replace(/\s+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||fallback}
+let combinedPrintInProgress=false;
+let combinedPrintFallback=null;
+function printCombinedRole(){
+ if(combinedPrintInProgress)return;
+ const playerSchedule=$('playerSchedule');
+ const courtSchedule=$('courtSchedule');
+ if(!playerSchedule||!courtSchedule){console.error('No se encontraron los roles para imprimir.');return;}
+ const sourceSheets=[...playerSchedule.querySelectorAll(':scope > .player-sheet'),...courtSchedule.querySelectorAll(':scope > .court-sheet')];
+ if(!sourceSheets.length){console.error('No hay tablas combinadas para imprimir.');return;}
+ combinedPrintInProgress=true;
+ const previousTitle=document.title;
+ const eventName=safeFilePart(state.config.eventName,'Evento');
+ const category=safeFilePart(state.config.category,'Categoria');
+ const printRoot=document.createElement('div');
+ printRoot.id='combinedPrintContainer';
+ printRoot.setAttribute('aria-hidden','true');
+ sourceSheets.forEach((source,index)=>{
+  const page=document.createElement('section');
+  page.className='combined-print-page';
+  page.dataset.page=String(index+1);
+  const frame=document.createElement('div');
+  frame.className='combined-print-frame';
+  const clone=source.cloneNode(true);
+  clone.classList.add('combined-print-sheet');
+  frame.appendChild(clone);
+  page.appendChild(frame);
+  printRoot.appendChild(page);
+ });
+ document.body.appendChild(printRoot);
+ let restored=false;
  const restore=()=>{
   if(restored)return;
   restored=true;
-  if(focusTimer)clearTimeout(focusTimer);
-  if(fallbackTimer)clearTimeout(fallbackTimer);
-  document.title=previousTitle;
-  document.body.classList.remove('print-combined-role');
-  player.style.display=previousPlayer;
-  court.style.display=previousCourt;
   window.removeEventListener('afterprint',restore);
-  window.removeEventListener('focus',restoreAfterReturn);
-  document.removeEventListener('visibilitychange',restoreWhenVisible);
-  if(printMedia){
-   if(printMedia.removeEventListener)printMedia.removeEventListener('change',printMediaChanged);
-   else if(printMedia.removeListener)printMedia.removeListener(printMediaChanged);
-  }
+  if(combinedPrintFallback){clearTimeout(combinedPrintFallback);combinedPrintFallback=null;}
+  document.title=previousTitle;
+  document.body.classList.remove('print-combined-role','print-combined-isolated');
+  printRoot.remove();
+  combinedPrintInProgress=false;
  };
- const restoreAfterReturn=()=>{
-  if(!document.body.classList.contains('print-combined-role'))return;
-  focusTimer=setTimeout(restore,700);
+ const fitCombinedPrintPages=()=>{
+  printRoot.querySelectorAll('.combined-print-page').forEach(page=>{
+   const frame=page.querySelector('.combined-print-frame');
+   const sheet=page.querySelector('.combined-print-sheet');
+   frame.style.setProperty('--fit-scale','1');
+   const pageRect=page.getBoundingClientRect();
+   const contentRect=sheet.getBoundingClientRect();
+   const availableWidth=Math.max(1,pageRect.width-2);
+   const availableHeight=Math.max(1,pageRect.height-2);
+   const contentWidth=Math.max(1,sheet.scrollWidth,contentRect.width);
+   const contentHeight=Math.max(1,sheet.scrollHeight,contentRect.height);
+   const scale=Math.min(1,availableWidth/contentWidth,availableHeight/contentHeight);
+   const fittedScale=Math.max(0.20,scale*0.97);
+   frame.style.setProperty('--fit-scale',String(fittedScale));
+  });
  };
- const restoreWhenVisible=()=>{if(document.visibilityState==='visible')restoreAfterReturn()};
- const printMediaChanged=e=>{if(!e.matches)restoreAfterReturn()};
  document.title=`${eventName}_Rol_${category}`;
- document.body.classList.add('print-combined-role');
- player.style.display='block';
- court.style.display='block';
+ document.body.classList.add('print-combined-role','print-combined-isolated');
  window.addEventListener('afterprint',restore,{once:true});
- window.addEventListener('focus',restoreAfterReturn);
- document.addEventListener('visibilitychange',restoreWhenVisible);
- if(printMedia){
-  if(printMedia.addEventListener)printMedia.addEventListener('change',printMediaChanged);
-  else if(printMedia.addListener)printMedia.addListener(printMediaChanged);
- }
- /* Fuerza el reflujo y espera dos cuadros para que WebKit prepare ambas vistas. */
- void document.body.offsetHeight;
- requestAnimationFrame(()=>requestAnimationFrame(()=>{
-  try{window.print()}catch(error){console.error('No fue posible abrir la impresion:',error);restore()}
- }));
- /* Respaldo tardio: no desmonta la vista mientras iOS mantiene abierto Compartir/Imprimir. */
- fallbackTimer=setTimeout(restore,60000);
+ combinedPrintFallback=setTimeout(restore,120000);
+ const images=[...printRoot.querySelectorAll('img')];
+ const imagesReady=Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{
+  img.addEventListener('load',resolve,{once:true});
+  img.addEventListener('error',resolve,{once:true});
+ })));
+ const fontsReady=document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve();
+ Promise.all([imagesReady,fontsReady]).then(()=>{
+  void printRoot.offsetHeight;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   fitCombinedPrintPages();
+   requestAnimationFrame(()=>setTimeout(()=>{
+    try{window.print()}catch(error){console.error('No fue posible abrir la impresion:',error);restore();}
+   },300));
+  }));
+ });
 }
 function showRoleView(v){roleView=v;$('playerRoleView').style.display=v==='player'?'block':'none';$('courtRoleView').style.display=v==='court'?'block':'none'}
 function renderSchedule(){const summary=$('scheduleSummary'), ps=$('playerSchedule'), cards=$('roundCards');if(!state.rounds.length){summary.innerHTML='';ps.innerHTML='<div class="empty">Todavía no se ha generado un rol.</div>';cards.innerHTML='';return}summary.innerHTML=`<div class="kpis"><div class="kpi"><b>${state.players.length}</b>Jugadores</div><div class="kpi"><b>${state.rounds.length}</b>Rondas</div><div class="kpi"><b>${Math.max(...state.rounds.map(r=>r.matches.length))}</b>Canchas máx.</div><div class="kpi"><b>${state.config.minutes}</b>Minutos</div></div>`;
@@ -775,14 +1265,14 @@ function saveOcrResults(){if(smartCapture.busy||!smartCapture.rows.length)return
 
 function saveScore(rn,mi){const r=state.rounds.find(x=>x.number===rn),m=r&&r.matches[mi];if(!m)return flash('No se encontró el partido.');const s1=+$(`s1-${rn}-${mi}`).value,s2=+$(`s2-${rn}-${mi}`).value;if(Number.isNaN(s1)||Number.isNaN(s2))return flash('Captura los puntos de ambos equipos.');if(s1<0||s2<0)return flash('Los puntos no pueden ser negativos.');if(!requirePin())return flash('PIN incorrecto.');m.score1=s1;m.score2=s2;persist();renderAll();flash('Resultado guardado correctamente.')}
 function renderResults(){const box=$('resultRounds');if(!state.rounds.length){box.innerHTML='<div class="card empty">Genera primero el rol.</div>';return}box.innerHTML=state.rounds.map(r=>`<div class="card"><h3>Ronda ${r.number} · ${timeFor(r)}</h3>${r.matches.map((m,i)=>`<div class="match ${m.score1!==null?'done':''}"><div><div class="team">${esc(name(m.team1[0]))} / ${esc(name(m.team1[1]))}</div><div class="scores"><input id="s1-${r.number}-${i}" type="number" min="0" value="${m.score1??''}" placeholder="Pts"></div></div><div><span class="pill">${esc(courtName(m.court))}</span><div class="vs">VS</div></div><div><div class="team">${esc(name(m.team2[0]))} / ${esc(name(m.team2[1]))}</div><div class="scores"><input id="s2-${r.number}-${i}" type="number" min="0" value="${m.score2??''}" placeholder="Pts"></div></div><div class="match-actions"><button class="btn" onclick="saveScore(${r.number},${i})">Guardar puntos</button></div></div>`).join('')}</div>`).join('')}
-function standings(){let s=Object.fromEntries(state.players.map(p=>[p.id,{id:p.id,name:p.name,pj:0,pf:0,pc:0,rests:0}]));state.rounds.forEach(r=>{r.rests.forEach(id=>{if(s[id])s[id].rests++});r.matches.forEach(m=>{if(m.score1===null||m.score2===null)return;m.team1.forEach(id=>{s[id].pj++;s[id].pf+=m.score1;s[id].pc+=m.score2});m.team2.forEach(id=>{s[id].pj++;s[id].pf+=m.score2;s[id].pc+=m.score1})})});return Object.values(s).sort((a,b)=>(((b.pj?b.pf/b.pj:0)-(a.pj?a.pf/a.pj:0)))||((b.pf-b.pc)-(a.pf-a.pc))||(b.pf-a.pf)||a.pc-b.pc||b.pj-a.pj||a.name.localeCompare(b.name))}
-function renderStandings(){let s=standings(),completed=state.rounds.flatMap(r=>r.matches).filter(m=>m.score1!==null).length,total=state.rounds.flatMap(r=>r.matches).length;$('standingsKpis').innerHTML=`<div class="kpis"><div class="kpi"><b>${completed}</b>Partidos terminados</div><div class="kpi"><b>${total-completed}</b>Pendientes</div><div class="kpi"><b>${s.reduce((a,x)=>a+x.pf,0)}</b>Puntos individuales</div><div class="kpi"><b>${s[0]?.pf||0}</b>Puntos del líder</div></div>`;const eventTitle=esc(state.config.eventName||'Evento de pádel'),category=esc(state.config.category||''),eventDate=state.config.eventDate?new Date(state.config.eventDate+'T00:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}):'';$('standingsTable').innerHTML=s.length?`<section class="classification-sheet"><div class="classification-head"><div class="classification-logo"><img class="print-logo" src="${document.querySelector('.print-logo')?.src||''}" alt="Logo TURBO"></div><div class="classification-title">CLASIFICACIÓN</div><div class="classification-event">${eventTitle} · CATEGORÍA ${category}<br>${esc(eventDate)}</div></div><div class="classification-scroll" aria-label="Tabla de clasificación con desplazamiento horizontal"><table class="classification-table"><thead><tr><th>POS.</th><th>JUGADOR</th><th>PJ</th><th>PUNTOS</th><th>RECIBIDOS</th><th>DIFERENCIA</th><th>PROMEDIO</th><th>DESCANSOS</th></tr></thead><tbody>${s.map((x,i)=>`<tr class="${i===0?'leader':''}"><td class="rank">${i+1}</td><td class="name">${esc(x.name)}</td><td>${x.pj}</td><td class="points">${x.pf}</td><td>${x.pc}</td><td>${x.pf-x.pc>0?'+':''}${x.pf-x.pc}</td><td class="avg-highlight">${x.pj?(x.pf/x.pj).toFixed(2):'0.00'}</td><td>${x.rests}</td></tr>`).join('')}</tbody></table></div></section>`:'<div class="empty">Sin jugadores.</div>'}
+function standings(){let s=Object.fromEntries(state.players.map(p=>[p.id,{id:p.id,name:p.name,pj:0,pg:0,pf:0,pc:0}]));state.rounds.forEach(r=>{r.matches.forEach(m=>{if(m.score1===null||m.score2===null)return;const team1Won=m.score1>m.score2,team2Won=m.score2>m.score1;m.team1.forEach(id=>{s[id].pj++;s[id].pf+=m.score1;s[id].pc+=m.score2;if(team1Won)s[id].pg++});m.team2.forEach(id=>{s[id].pj++;s[id].pf+=m.score2;s[id].pc+=m.score1;if(team2Won)s[id].pg++})})});return Object.values(s).sort((a,b)=>(((b.pj?b.pf/b.pj:0)-(a.pj?a.pf/a.pj:0)))||((b.pf-b.pc)-(a.pf-a.pc))||(b.pf-a.pf)||a.pc-b.pc||b.pg-a.pg||b.pj-a.pj||a.name.localeCompare(b.name))}
+function renderStandings(){let s=standings(),completed=state.rounds.flatMap(r=>r.matches).filter(m=>m.score1!==null).length,total=state.rounds.flatMap(r=>r.matches).length;$('standingsKpis').innerHTML=`<div class="kpis"><div class="kpi"><b>${completed}</b>Partidos terminados</div><div class="kpi"><b>${total-completed}</b>Pendientes</div><div class="kpi"><b>${s.reduce((a,x)=>a+x.pf,0)}</b>Puntos individuales</div><div class="kpi"><b>${s[0]?.pf||0}</b>Puntos del líder</div></div>`;const eventTitle=esc(state.config.eventName||'Evento de pádel'),category=esc(state.config.category||''),eventDate=state.config.eventDate?new Date(state.config.eventDate+'T00:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}):'';$('standingsTable').innerHTML=s.length?`<section class="classification-sheet"><div class="classification-head"><div class="classification-logo"><img class="print-logo" src="${document.querySelector('.print-logo')?.src||''}" alt="Logo TURBO"></div><div class="classification-title">CLASIFICACIÓN</div><div class="classification-event">${eventTitle} · CATEGORÍA ${category}<br>${esc(eventDate)}</div></div><div class="classification-scroll" aria-label="Tabla de clasificación con desplazamiento horizontal"><table class="classification-table"><thead><tr><th>POS.</th><th>JUGADOR</th><th>PJ</th><th>PG</th><th>PUNTOS</th><th>RECIBIDOS</th><th>DIFERENCIA</th><th>PROMEDIO</th></tr></thead><tbody>${s.map((x,i)=>`<tr class="${i===0?'leader':''}"><td class="rank">${i+1}</td><td class="name">${esc(x.name)}</td><td>${x.pj}</td><td>${x.pg}</td><td class="points">${x.pf}</td><td>${x.pc}</td><td>${x.pf-x.pc>0?'+':''}${x.pf-x.pc}</td><td class="avg-highlight">${x.pj?(x.pf/x.pj).toFixed(2):'0.00'}</td></tr>`).join('')}</tbody></table></div></section>`:'<div class="empty">Sin jugadores.</div>'}
 function renderAll(){renderPlayers();renderSchedule();renderResults();renderStandings();$('eventBadge').textContent=(state.config.eventName||'Evento sin nombre')+(state.config.category?' · '+state.config.category:'')}
 function resetApp(){if(!confirm('Se eliminarán el evento, jugadores, rol y resultados de este navegador.'))return;localStorage.removeItem(KEY);state={config:{},players:[],rounds:[]};location.reload()}
 load();
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(()=>{})); }
 </script>
-<!-- v39.6: confirmación antes de reemplazar un rol existente. -->
+<!-- v41.5: Clasificación móvil a ancho completo sin transformaciones de escala. -->
 </body></html>
 
 <!-- v39.5 rebuilt directly from v38.7; capture modal and review table structure preserved. -->
