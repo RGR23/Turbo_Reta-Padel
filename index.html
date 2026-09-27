@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Reta Pádel Individual v41.7</title>
+<title>Reta Pádel Individual v41.8</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="turbo-icono.png">  
 <meta name="theme-color" content="#123A63">
@@ -882,6 +882,9 @@ body.print-combined-isolated #combinedPrintContainer .combined-print-frame{
   }
 }
 
+
+/* v41.8 - Horarios en blanco en encabezados de rondas del Rol por Jugador */
+.player-role-table thead th .assignment-time{color:#FFFFFF!important;font-weight:700!important;}
 </style>
 </head>
 <body>
@@ -903,7 +906,7 @@ body.print-combined-isolated #combinedPrintContainer .combined-print-frame{
 </div><div id="calcSummary" class="calc-box"></div><div class="actions" style="margin-top:15px"><button class="btn" onclick="saveConfig()">Guardar configuración</button><button class="btn danger" onclick="resetApp()">Reiniciar app</button></div><p class="help">El PIN protege la edición en este dispositivo. Esta primera versión guarda la información localmente en el navegador.</p></div></section>
 <section id="players" class="panel"><div class="card"><h2>Jugadores</h2><div class="grid"><div class="c8"><label>Nombre</label><input id="newPlayer" placeholder="Ej. Carlos" onkeydown="if(event.key==='Enter')addPlayer()" /></div><div class="c3"><label>Comienza a jugar desde</label><select id="newPlayerStartRound"><option value="1" selected>1ra ronda</option><option value="2">2da ronda</option><option value="3">3ra ronda</option></select></div><div class="c3" style="align-self:end"><button class="btn" onclick="addPlayer()">Agregar jugador</button></div></div><div id="playerList" style="margin-top:15px"></div><div id="playerCountStatus" class="notice"></div><div class="actions"><button class="btn" onclick="generateSchedule()">Generar rol</button></div></div></section>
 <section id="schedule" class="panel"><div id="scheduleSummary" class="no-print"></div><div class="card"><div class="actions"><button class="btn secondary" onclick="showRoleView('player')">Rol por Jugador</button><button class="btn secondary" onclick="showRoleView('court')">Rol por Cancha</button></div><div id="playerRoleView"><div class="actions no-print" style="justify-content:space-between"><h2 style="margin:0">Rol por jugador</h2><div class="actions"><button class="btn light" onclick="printCombinedRole()">Imprimir / PDF Combinado</button></div></div><div id="playerSchedule"></div></div><div id="courtRoleView" style="display:none"><div class="actions no-print" style="justify-content:space-between"><h2 style="margin:0">Rol por cancha</h2><div class="actions"><button class="btn light" onclick="printCombinedRole()">Imprimir / PDF Combinado</button></div></div><div id="courtSchedule"></div></div></div><div id="roundCards"></div></section>
-<section id="results" class="panel"><div class="card smart-capture-card no-print"><h2>Captura inteligente de resultados <span class="pill">BETA v41.7</span></h2><p class="help">Toma una foto del Rol por Cancha. La cancha se identifica leyendo el encabezado y la tabla muestra los partidos para revisar o capturar puntos.</p><div class="actions"><button class="btn" type="button" onclick="openSmartCapture()">📷 Capturar resultados</button></div></div><div class="notice">Solo el organizador puede capturar o corregir resultados. Los puntos de cada equipo se asignan individualmente a sus dos integrantes.</div><div id="resultRounds"></div></section>
+<section id="results" class="panel"><div class="card smart-capture-card no-print"><h2>Captura inteligente de resultados <span class="pill">BETA v41.8</span></h2><p class="help">Toma una foto del Rol por Cancha. La cancha se identifica leyendo el encabezado y la tabla muestra los partidos para revisar o capturar puntos.</p><div class="actions"><button class="btn" type="button" onclick="openSmartCapture()">📷 Capturar resultados</button></div></div><div class="notice">Solo el organizador puede capturar o corregir resultados. Los puntos de cada equipo se asignan individualmente a sus dos integrantes.</div><div id="resultRounds"></div></section>
 <section id="standings" class="panel"><div id="standingsKpis" class="no-print"></div><div class="card"><div class="actions no-print" style="justify-content:space-between"><h2 style="margin:0">Clasificación individual</h2><button class="btn light" onclick="printClassification()">Imprimir / PDF Combinado</button></div><div id="standingsTable"></div></div></section>
 <div class="footer-note">MVP local · Los datos permanecen en este navegador mediante localStorage.</div>
 </main>
@@ -1340,6 +1343,8 @@ load();
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(()=>{})); }
 </script>
 <!-- v41.5: Clasificación móvil a ancho completo sin transformaciones de escala. -->
+
+<!-- v41.8: horarios de rondas en blanco en el encabezado del Rol por Jugador. -->
 </body></html>
 
 <!-- v39.5 rebuilt directly from v38.7; capture modal and review table structure preserved. -->
