@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Reta Pádel Individual v41.6-SafariTest</title>
+<title>Reta Pádel Individual v41.7 experimental</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="turbo-icono.png">  
 <meta name="theme-color" content="#123A63">
@@ -976,8 +976,53 @@ function timeFor(r){return roundTimeRange(r)}
 function courtName(n){return state.config['court'+n]||'Cancha '+n}
 let roleView='player';
 let classificationPrintInProgress=false;
+
+function isIOSSafariDedicatedPrint(){
+ return /iP(ad|hone|od)/.test(navigator.userAgent)&&/Safari/.test(navigator.userAgent)&&!/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);
+}
+function openIOSSafariPrintWindow(title,contentHtml,mode){
+ const printWindow=window.open('','_blank');
+ if(!printWindow){alert('Safari no permitio abrir la ventana de impresion.');return false;}
+ const styles=[...document.querySelectorAll('style')].map(style=>style.textContent).join('\n');
+ const bodyClass=mode==='role'?'print-combined-role print-combined-isolated':'print-classification';
+ const dedicatedCss=`
+  @page{size:letter landscape;margin:8mm}
+  html,body{margin:0!important;padding:0!important;background:#fff!important}
+  .safari-print-controls{position:sticky;top:0;z-index:99999;padding:12px;background:#fff;border-bottom:1px solid #ccd6e0;text-align:center}
+  .safari-print-controls button{font:700 16px system-ui;padding:12px 20px;border:0;border-radius:10px;background:#245fa8;color:#fff}
+  .safari-print-page{break-after:page;page-break-after:always}
+  .safari-print-page:last-child{break-after:auto;page-break-after:auto}
+  #combinedPrintContainer{display:block!important;position:static!important;left:auto!important;top:auto!important;width:auto!important}
+  @media print{.safari-print-controls{display:none!important}}
+ `;
+ const safeTitle=String(title||'Impresion').replace(/[<>&\"']/g,'');
+ const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle}</title><style>${styles}${dedicatedCss}</style></head><body class="${bodyClass}"><div class="safari-print-controls"><button type="button" onclick="window.focus();window.print()">Imprimir / Guardar PDF</button></div>${contentHtml}<script>window.addEventListener('load',function(){var run=function(){setTimeout(function(){try{window.focus();window.print()}catch(e){console.error('Safari dedicated print error',e)}},250)};if(document.fonts&&document.fonts.ready){document.fonts.ready.then(run).catch(run)}else{run()}});<\/script></body></html>`;
+ printWindow.document.open();
+ printWindow.document.write(html);
+ printWindow.document.close();
+ return true;
+}
+function printClassificationIOSSafari(){
+ const source=document.querySelector('#standingsTable .classification-sheet');
+ if(!source){console.error('No hay clasificacion para imprimir.');return;}
+ const eventName=safeFilePart(state.config.eventName,'Evento');
+ const category=safeFilePart(state.config.category,'Categoria');
+ openIOSSafariPrintWindow(`${eventName}_Clasificacion_${category}`,`<main id="standings"><div class="card">${source.outerHTML}</div></main>`,'classification');
+}
+function printCombinedRoleIOSSafari(){
+ const playerSchedule=document.getElementById('playerSchedule');
+ const courtSchedule=document.getElementById('courtSchedule');
+ if(!playerSchedule||!courtSchedule){console.error('No se encontraron los roles para imprimir.');return;}
+ const sheets=[...playerSchedule.querySelectorAll(':scope > .player-sheet'),...courtSchedule.querySelectorAll(':scope > .court-sheet')];
+ if(!sheets.length){console.error('No hay tablas combinadas para imprimir.');return;}
+ const pages=sheets.map(sheet=>`<section class="safari-print-page">${sheet.outerHTML}</section>`).join('');
+ const eventName=safeFilePart(state.config.eventName,'Evento');
+ const category=safeFilePart(state.config.category,'Categoria');
+ openIOSSafariPrintWindow(`${eventName}_Rol_${category}`,`<main id="combinedPrintContainer">${pages}</main>`,'role');
+}
+
 function printClassification(){
- window.__safariPrintProbe=window.open('','_blank');
+ if(isIOSSafariDedicatedPrint()){printClassificationIOSSafari();return;}
  if(classificationPrintInProgress)return;
  const source=document.querySelector('#standingsTable .classification-sheet');
  if(!source){console.error('No hay clasificacion para imprimir.');return;}
@@ -990,13 +1035,10 @@ function printClassification(){
  iframe.id='classificationPrintFrame';
  iframe.setAttribute('title','Vista de impresion de clasificacion');
  iframe.style.position='fixed';
- iframe.style.left='0';
+ iframe.style.left='-20000px';
  iframe.style.top='0';
- iframe.style.width='1px';
- iframe.style.height='1px';
- iframe.style.opacity='0.01';
- iframe.style.pointerEvents='none';
- iframe.style.zIndex='-1';
+ iframe.style.width='1054px';
+ iframe.style.height='798px';
  iframe.style.border='0';
  const logo=source.querySelector('.print-logo');
  const logoSrc=logo?logo.src:'';
@@ -1071,10 +1113,9 @@ function printClassification(){
    table.style.width='100%';
    table.style.minWidth='0';
    table.style.maxWidth='100%';
-   console.log('Classification print requested');
    const isIOSSafari=/iP(ad|hone|od)/.test(navigator.userAgent)&&/Safari/.test(navigator.userAgent)&&!/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);
    if(isIOSSafari){
-    try{window.focus();window.print()}catch(error){console.error('Classification print error',error)}
+    try{window.focus();window.print()}catch(error){console.error('No fue posible abrir la impresion en Safari:',error)}
    }else{
     requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()));
    }
@@ -1089,9 +1130,6 @@ function printClassification(){
  };
  const onMessage=e=>{if(e.source===iframe.contentWindow&&e.data==='classification-print-finished')cleanup()};
  window.addEventListener('message',onMessage);
- iframe.onload=()=>{
-  console.log('Classification iframe loaded');
- };
  document.body.appendChild(iframe);
  setTimeout(()=>{if(classificationPrintInProgress)cleanup()},120000);
 }
@@ -1099,7 +1137,7 @@ function safeFilePart(value,fallback){return String(value||fallback).trim().repl
 let combinedPrintInProgress=false;
 let combinedPrintFallback=null;
 function printCombinedRole(){
- window.__safariPrintProbe=window.open('','_blank');
+ if(isIOSSafariDedicatedPrint()){printCombinedRoleIOSSafari();return;}
  if(combinedPrintInProgress)return;
  const playerSchedule=$('playerSchedule');
  const courtSchedule=$('courtSchedule');
@@ -1169,7 +1207,7 @@ function printCombinedRole(){
    fitCombinedPrintPages();
    const isIOSSafari=/iP(ad|hone|od)/.test(navigator.userAgent)&&/Safari/.test(navigator.userAgent)&&!/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);
    if(isIOSSafari){
-    try{if(window.__safariPrintProbe&&!window.__safariPrintProbe.closed){window.__safariPrintProbe.document.write('<html><body>Safari Print Probe</body></html>');window.__safariPrintProbe.document.close();window.__safariPrintProbe.focus();window.__safariPrintProbe.print();}else{window.focus();window.print();}}catch(error){console.error('No fue posible abrir la impresion en Safari:',error);restore();}
+    try{window.focus();window.print()}catch(error){console.error('No fue posible abrir la impresion en Safari:',error);restore();}
    }else{
     requestAnimationFrame(()=>setTimeout(()=>{
      try{window.print()}catch(error){console.error('No fue posible abrir la impresion:',error);restore();}
@@ -1291,7 +1329,7 @@ function resetApp(){if(!confirm('Se eliminarán el evento, jugadores, rol y resu
 load();
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(()=>{})); }
 </script>
-<!-- v41.6-SafariTest: Clasificación móvil a ancho completo sin transformaciones de escala. -->
+<!-- v41.7 experimental: Clasificación móvil a ancho completo sin transformaciones de escala. -->
 </body></html>
 
 <!-- v39.5 rebuilt directly from v38.7; capture modal and review table structure preserved. -->
