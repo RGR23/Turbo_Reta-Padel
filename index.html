@@ -977,6 +977,7 @@ function courtName(n){return state.config['court'+n]||'Cancha '+n}
 let roleView='player';
 let classificationPrintInProgress=false;
 function printClassification(){
+ window.__safariPrintProbe=window.open('','_blank');
  if(classificationPrintInProgress)return;
  const source=document.querySelector('#standingsTable .classification-sheet');
  if(!source){console.error('No hay clasificacion para imprimir.');return;}
@@ -1098,6 +1099,7 @@ function safeFilePart(value,fallback){return String(value||fallback).trim().repl
 let combinedPrintInProgress=false;
 let combinedPrintFallback=null;
 function printCombinedRole(){
+ window.__safariPrintProbe=window.open('','_blank');
  if(combinedPrintInProgress)return;
  const playerSchedule=$('playerSchedule');
  const courtSchedule=$('courtSchedule');
@@ -1167,7 +1169,7 @@ function printCombinedRole(){
    fitCombinedPrintPages();
    const isIOSSafari=/iP(ad|hone|od)/.test(navigator.userAgent)&&/Safari/.test(navigator.userAgent)&&!/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);
    if(isIOSSafari){
-    try{window.focus();window.print()}catch(error){console.error('No fue posible abrir la impresion en Safari:',error);restore();}
+    try{if(window.__safariPrintProbe&&!window.__safariPrintProbe.closed){window.__safariPrintProbe.document.write('<html><body>Safari Print Probe</body></html>');window.__safariPrintProbe.document.close();window.__safariPrintProbe.focus();window.__safariPrintProbe.print();}else{window.focus();window.print();}}catch(error){console.error('No fue posible abrir la impresion en Safari:',error);restore();}
    }else{
     requestAnimationFrame(()=>setTimeout(()=>{
      try{window.print()}catch(error){console.error('No fue posible abrir la impresion:',error);restore();}
