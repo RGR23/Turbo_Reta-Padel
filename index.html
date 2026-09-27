@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Reta Pádel Individual v41.6</title>
+<title>Reta Pádel Individual v41.6-SafariTest</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="turbo-icono.png">  
 <meta name="theme-color" content="#123A63">
@@ -989,10 +989,13 @@ function printClassification(){
  iframe.id='classificationPrintFrame';
  iframe.setAttribute('title','Vista de impresion de clasificacion');
  iframe.style.position='fixed';
- iframe.style.left='-20000px';
+ iframe.style.left='0';
  iframe.style.top='0';
- iframe.style.width='1054px';
- iframe.style.height='798px';
+ iframe.style.width='1px';
+ iframe.style.height='1px';
+ iframe.style.opacity='0.01';
+ iframe.style.pointerEvents='none';
+ iframe.style.zIndex='-1';
  iframe.style.border='0';
  const logo=source.querySelector('.print-logo');
  const logoSrc=logo?logo.src:'';
@@ -1067,9 +1070,10 @@ function printClassification(){
    table.style.width='100%';
    table.style.minWidth='0';
    table.style.maxWidth='100%';
+   console.log('Classification print requested');
    const isIOSSafari=/iP(ad|hone|od)/.test(navigator.userAgent)&&/Safari/.test(navigator.userAgent)&&!/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);
    if(isIOSSafari){
-    try{window.focus();window.print()}catch(error){console.error('No fue posible abrir la impresion en Safari:',error)}
+    try{window.focus();window.print()}catch(error){console.error('Classification print error',error)}
    }else{
     requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()));
    }
@@ -1084,6 +1088,9 @@ function printClassification(){
  };
  const onMessage=e=>{if(e.source===iframe.contentWindow&&e.data==='classification-print-finished')cleanup()};
  window.addEventListener('message',onMessage);
+ iframe.onload=()=>{
+  console.log('Classification iframe loaded');
+ };
  document.body.appendChild(iframe);
  setTimeout(()=>{if(classificationPrintInProgress)cleanup()},120000);
 }
@@ -1282,7 +1289,7 @@ function resetApp(){if(!confirm('Se eliminarán el evento, jugadores, rol y resu
 load();
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(()=>{})); }
 </script>
-<!-- v41.6: Clasificación móvil a ancho completo sin transformaciones de escala. -->
+<!-- v41.6-SafariTest: Clasificación móvil a ancho completo sin transformaciones de escala. -->
 </body></html>
 
 <!-- v39.5 rebuilt directly from v38.7; capture modal and review table structure preserved. -->
