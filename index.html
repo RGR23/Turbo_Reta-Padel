@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Reta Pádel Individual v42.1</title>
+<title>Reta Pádel Individual v42.2</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="turbo-icono.png">  
 <meta name="theme-color" content="#123A63">
@@ -980,7 +980,7 @@ function roundTimeRange(r){const roundNumber=typeof r==='object'&&r!==null?Numbe
 function timeFor(r){return roundTimeRange(r)}
 function courtName(n){return state.config['court'+n]||'Cancha '+n}
 let roleView='player';
-/* v42.1 - Clasificacion usa el mismo flujo PDF que Rol mediante html2canvas + jsPDF en todos los dispositivos. */
+/* v42.2 - Diagnostico de Web Share para Android/Chrome sin ventana adicional; conserva el flujo PDF unificado de v42.1. */
 function isIOSDevice(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
 function pdfLibrariesReady(){return typeof window.html2canvas==='function'&&window.jspdf&&typeof window.jspdf.jsPDF==='function'}
 async function waitForPdfAssets(root){
@@ -1001,13 +1001,32 @@ async function canvasForIOSPdf(source){
  try{await waitForPdfAssets(clone);void clone.offsetHeight;return await html2canvas(clone,{scale:3,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:1054})}finally{host.remove()}
 }
 async function openIOSPdf(pdf,filename){
- const blob=pdf.output('blob');const url=URL.createObjectURL(blob);
+ const blob=pdf.output('blob');
+ const url=URL.createObjectURL(blob);
  const file=(typeof File==='function')?new File([blob],filename,{type:'application/pdf'}):null;
  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
-  try{await navigator.share({files:[file],title:filename});setTimeout(()=>URL.revokeObjectURL(url),60000);return}catch(error){if(error&&error.name==='AbortError'){URL.revokeObjectURL(url);return}}
+  try{
+   await navigator.share({files:[file],title:filename});
+   setTimeout(()=>URL.revokeObjectURL(url),60000);
+   return;
+  }catch(error){
+   console.error('navigator.share error:',error?.name,error?.message,error);
+   if(error&&error.name==='AbortError'){
+    URL.revokeObjectURL(url);
+    return;
+   }
+  }
  }
  const opened=window.open(url,'_blank');
- if(!opened){const a=document.createElement('a');a.href=url;a.download=filename;a.target='_blank';document.body.appendChild(a);a.click();a.remove()}
+ if(!opened){
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=filename;
+  a.target='_blank';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+ }
  setTimeout(()=>URL.revokeObjectURL(url),120000);
 }
 async function generateIOSClassificationPDF(source){
@@ -1176,7 +1195,7 @@ if ('serviceWorker' in navigator) { window.addEventListener('load', () => naviga
 </script>
 <!-- v41.5: Clasificación móvil a ancho completo sin transformaciones de escala. -->
 
-<!-- v42.1: Clasificacion utiliza el mismo flujo PDF de Rol con html2canvas y jsPDF en todos los dispositivos. -->
+<!-- v42.2: Diagnostico de navigator.share sin ventana adicional; conserva el flujo PDF unificado de v42.1. -->
 </body></html>
 
 <!-- v39.5 rebuilt directly from v38.7; capture modal and review table structure preserved. -->
