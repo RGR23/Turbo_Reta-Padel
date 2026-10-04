@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Reta Pádel Individual v41.8</title>
+<title>Reta Pádel Individual v42.1</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="turbo-icono.png">  
 <meta name="theme-color" content="#123A63">
@@ -980,7 +980,7 @@ function roundTimeRange(r){const roundNumber=typeof r==='object'&&r!==null?Numbe
 function timeFor(r){return roundTimeRange(r)}
 function courtName(n){return state.config['court'+n]||'Cancha '+n}
 let roleView='player';
-/* v41.7 - PDF nativo para iPhone/iPad mediante html2canvas + jsPDF. Chrome y Android conservan window.print(). */
+/* v42.1 - Clasificacion usa el mismo flujo PDF que Rol mediante html2canvas + jsPDF en todos los dispositivos. */
 function isIOSDevice(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
 function pdfLibrariesReady(){return typeof window.html2canvas==='function'&&window.jspdf&&typeof window.jspdf.jsPDF==='function'}
 async function waitForPdfAssets(root){
@@ -998,7 +998,7 @@ function prepareIOSPdfClone(source){
 }
 async function canvasForIOSPdf(source){
  const {host,clone}=prepareIOSPdfClone(source);
- try{await waitForPdfAssets(clone);void clone.offsetHeight;return await html2canvas(clone,{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:1054})}finally{host.remove()}
+ try{await waitForPdfAssets(clone);void clone.offsetHeight;return await html2canvas(clone,{scale:3,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:1054})}finally{host.remove()}
 }
 async function openIOSPdf(pdf,filename){
  const blob=pdf.output('blob');const url=URL.createObjectURL(blob);
@@ -1017,7 +1017,7 @@ async function generateIOSClassificationPDF(source){
  const pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight(),margin=8;
  const scale=Math.min((pageW-margin*2)/canvas.width,(pageH-margin*2)/canvas.height);
  const w=canvas.width*scale,h=canvas.height*scale;
- pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',(pageW-w)/2,(pageH-h)/2,w,h,undefined,'FAST');
+ pdf.addImage(canvas.toDataURL('image/png'),'PNG',(pageW-w)/2,(pageH-h)/2,w,h,undefined,'FAST');
  const filename=`${safeFilePart(state.config.eventName,'Evento')}_Clasificacion_${safeFilePart(state.config.category,'Categoria')}.pdf`;
  await openIOSPdf(pdf,filename);
 }
@@ -1029,7 +1029,7 @@ async function generateIOSCombinedRolePDF(sourceSheets){
   const canvas=await canvasForIOSPdf(sourceSheets[i]);if(i)pdf.addPage('letter','landscape');
   const scale=Math.min((pageW-margin*2)/canvas.width,(pageH-margin*2)/canvas.height);
   const w=canvas.width*scale,h=canvas.height*scale;
-  pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',(pageW-w)/2,(pageH-h)/2,w,h,undefined,'FAST');
+  pdf.addImage(canvas.toDataURL('image/png'),'PNG',(pageW-w)/2,(pageH-h)/2,w,h,undefined,'FAST');
  }
  const filename=`${safeFilePart(state.config.eventName,'Evento')}_Rol_${safeFilePart(state.config.category,'Categoria')}.pdf`;
  await openIOSPdf(pdf,filename);
@@ -1039,113 +1039,11 @@ function printClassification(){
  if(classificationPrintInProgress)return;
  const source=document.querySelector('#standingsTable .classification-sheet');
  if(!source){console.error('No hay clasificacion para imprimir.');return;}
- if(isIOSDevice()){
-  classificationPrintInProgress=true;
-  generateIOSClassificationPDF(source).catch(error=>{console.error('No fue posible generar el PDF nativo:',error);flash('No fue posible generar el PDF. Verifica tu conexión e inténtalo nuevamente.');}).finally(()=>{classificationPrintInProgress=false});
-  return;
- }
  classificationPrintInProgress=true;
- const previousTitle=document.title;
- const eventName=safeFilePart(state.config.eventName,'Evento');
- const category=safeFilePart(state.config.category,'Categoria');
- document.title=`${eventName}_Clasificacion_${category}`;
- const iframe=document.createElement('iframe');
- iframe.id='classificationPrintFrame';
- iframe.setAttribute('title','Vista de impresion de clasificacion');
- iframe.style.position='fixed';
- iframe.style.left='-20000px';
- iframe.style.top='0';
- iframe.style.width='1054px';
- iframe.style.height='798px';
- iframe.style.border='0';
- const logo=source.querySelector('.print-logo');
- const logoSrc=logo?logo.src:'';
- const sourceTable=source.querySelector('.classification-table');
- const headerCells=sourceTable?[...sourceTable.querySelectorAll('thead th')]:[];
- const totalHeaderWidth=headerCells.reduce((sum,cell)=>sum+cell.getBoundingClientRect().width,0)||1;
- const colgroup=`<colgroup>${headerCells.map(cell=>`<col style="width:${(cell.getBoundingClientRect().width/totalHeaderWidth*100).toFixed(4)}%">`).join('')}</colgroup>`;
- const sourceRect=source.getBoundingClientRect();
- const sourceHead=source.querySelector('.classification-head');
- const sourceTableRect=sourceTable?sourceTable.getBoundingClientRect():{width:sourceRect.width};
- const sourceFont=getComputedStyle(sourceTable||source).fontFamily;
- let html=source.outerHTML.replace(/src="[^"]*" alt="Logo TURBO"/,`src="${logoSrc}" alt="Logo TURBO"`);
- html=html.replace('<thead>',`${colgroup}<thead>`);
- const extractClassificationCss=()=>{
-  const keepRule=rule=>{
-   const text=rule.cssText||'';
-   return /classification|print-logo|:root|\*\s*\{|body\s*\{/.test(text)&&!/^@media\s+print/i.test(text);
-  };
-  const collected=[];
-  for(const sheet of [...document.styleSheets]){
-   let rules;
-   try{rules=[...sheet.cssRules]}catch(error){continue;}
-   for(const rule of rules){
-    if(rule.type===CSSRule.STYLE_RULE&&keepRule(rule))collected.push(rule.cssText);
-    else if(rule.type===CSSRule.MEDIA_RULE&&!/print/i.test(rule.conditionText||'')&&/classification/i.test(rule.cssText||''))collected.push(rule.cssText);
-   }
-  }
-  return collected.join('\n');
- };
- const originalClassificationCss=extractClassificationCss();
- const css=`
-  ${originalClassificationCss}
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;width:100%;height:100%;background:#fff;color:#15263A;font-family:${sourceFont}}
-  .print-page{width:263.4mm;height:199.4mm;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0;padding:0}
-  .print-frame{width:auto}.classification-scroll{transform:none!important;transform-origin:top center}
-  .classification-sheet{width:100%!important;max-width:100%!important;margin:0!important}
-  .classification-head{height:auto!important;min-height:100px!important;overflow:visible!important}
-  .classification-head{display:grid!important;grid-template-columns:18% 47% 35%!important;align-items:center!important}
-  .classification-head>*{visibility:visible!important;opacity:1!important;overflow:visible!important}
-  .classification-title{display:block!important;visibility:visible!important;opacity:1!important}
-  .classification-event{display:block!important;visibility:visible!important;opacity:1!important}
-  .classification-scroll{overflow:visible!important;padding-bottom:0!important;scrollbar-width:none!important}
-  .classification-scroll::-webkit-scrollbar{display:none!important}
-  .classification-table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important}
-  .classification-table th,.classification-table td{font-weight:800!important}
-  .classification-table .points{font-weight:800!important}
-  @page{size:letter landscape;margin:8mm}
-  @media print{
-   html,body{width:263.4mm;height:199.4mm;overflow:hidden}
-   .print-page{width:263.4mm;height:199.4mm}
-   .classification-head,.classification-table th,.classification-table td{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
-  }
- `
- iframe.srcdoc=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${document.title}</title><style>${css}</style></head><body><main class="print-page"><div class="print-frame">${html}</div></main><script>
-  window.addEventListener('load',async()=>{
-   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
-   const images=[...document.images];
-   await Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(r=>{img.onload=r;img.onerror=r})));
-   const page=document.querySelector('.print-page');
-   const frame=document.querySelector('.print-frame');
-   const sheet=document.querySelector('.classification-sheet');
-   const scroll=document.querySelector('.classification-scroll');
-   const table=document.querySelector('.classification-table');
-   const pageWidth=Math.max(1,page.clientWidth-4);
-   frame.style.width=pageWidth+'px';
-   sheet.style.width=pageWidth+'px';
-   sheet.style.maxWidth=pageWidth+'px';
-   scroll.style.width='100%';
-   scroll.style.maxWidth='100%';
-   scroll.style.transform='none';
-   table.style.width='100%';
-   table.style.minWidth='0';
-   table.style.maxWidth='100%';
-   requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()));
-  });
-  window.addEventListener('afterprint',()=>parent.postMessage('classification-print-finished','*'));
- <\/script><!-- v41.7: iPhone/iPad usa html2canvas + jsPDF; ruta window.print intacta para Chrome y Android. -->
-</body></html>`;
- const cleanup=()=>{
-  window.removeEventListener('message',onMessage);
-  document.title=previousTitle;
-  iframe.remove();
-  classificationPrintInProgress=false;
- };
- const onMessage=e=>{if(e.source===iframe.contentWindow&&e.data==='classification-print-finished')cleanup()};
- window.addEventListener('message',onMessage);
- document.body.appendChild(iframe);
- setTimeout(()=>{if(classificationPrintInProgress)cleanup()},120000);
+ generateIOSClassificationPDF(source).catch(error=>{
+  console.error('No fue posible generar el PDF:',error);
+  flash('No fue posible generar el PDF. Verifica tu conexión e inténtalo nuevamente.');
+ }).finally(()=>{classificationPrintInProgress=false});
 }
 function safeFilePart(value,fallback){return String(value||fallback).trim().replace(/[\\/:*?"<>|]+/g,'').replace(/\s+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||fallback}
 let combinedPrintInProgress=false;
@@ -1157,77 +1055,11 @@ function printCombinedRole(){
  if(!playerSchedule||!courtSchedule){console.error('No se encontraron los roles para imprimir.');return;}
  const sourceSheets=[...playerSchedule.querySelectorAll(':scope > .player-sheet'),...courtSchedule.querySelectorAll(':scope > .court-sheet')];
  if(!sourceSheets.length){console.error('No hay tablas combinadas para imprimir.');return;}
- if(isIOSDevice()){
-  combinedPrintInProgress=true;
-  generateIOSCombinedRolePDF(sourceSheets).catch(error=>{console.error('No fue posible generar el PDF nativo:',error);flash('No fue posible generar el PDF. Verifica tu conexión e inténtalo nuevamente.');}).finally(()=>{combinedPrintInProgress=false});
-  return;
- }
  combinedPrintInProgress=true;
- const previousTitle=document.title;
- const eventName=safeFilePart(state.config.eventName,'Evento');
- const category=safeFilePart(state.config.category,'Categoria');
- const printRoot=document.createElement('div');
- printRoot.id='combinedPrintContainer';
- printRoot.setAttribute('aria-hidden','true');
- sourceSheets.forEach((source,index)=>{
-  const page=document.createElement('section');
-  page.className='combined-print-page';
-  page.dataset.page=String(index+1);
-  const frame=document.createElement('div');
-  frame.className='combined-print-frame';
-  const clone=source.cloneNode(true);
-  clone.classList.add('combined-print-sheet');
-  frame.appendChild(clone);
-  page.appendChild(frame);
-  printRoot.appendChild(page);
- });
- document.body.appendChild(printRoot);
- let restored=false;
- const restore=()=>{
-  if(restored)return;
-  restored=true;
-  window.removeEventListener('afterprint',restore);
-  if(combinedPrintFallback){clearTimeout(combinedPrintFallback);combinedPrintFallback=null;}
-  document.title=previousTitle;
-  document.body.classList.remove('print-combined-role','print-combined-isolated');
-  printRoot.remove();
-  combinedPrintInProgress=false;
- };
- const fitCombinedPrintPages=()=>{
-  printRoot.querySelectorAll('.combined-print-page').forEach(page=>{
-   const frame=page.querySelector('.combined-print-frame');
-   const sheet=page.querySelector('.combined-print-sheet');
-   frame.style.setProperty('--fit-scale','1');
-   const pageRect=page.getBoundingClientRect();
-   const contentRect=sheet.getBoundingClientRect();
-   const availableWidth=Math.max(1,pageRect.width-2);
-   const availableHeight=Math.max(1,pageRect.height-2);
-   const contentWidth=Math.max(1,sheet.scrollWidth,contentRect.width);
-   const contentHeight=Math.max(1,sheet.scrollHeight,contentRect.height);
-   const scale=Math.min(1,availableWidth/contentWidth,availableHeight/contentHeight);
-   const fittedScale=Math.max(0.20,scale*0.97);
-   frame.style.setProperty('--fit-scale',String(fittedScale));
-  });
- };
- document.title=`${eventName}_Rol_${category}`;
- document.body.classList.add('print-combined-role','print-combined-isolated');
- window.addEventListener('afterprint',restore,{once:true});
- combinedPrintFallback=setTimeout(restore,120000);
- const images=[...printRoot.querySelectorAll('img')];
- const imagesReady=Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{
-  img.addEventListener('load',resolve,{once:true});
-  img.addEventListener('error',resolve,{once:true});
- })));
- const fontsReady=document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve();
- Promise.all([imagesReady,fontsReady]).then(()=>{
-  void printRoot.offsetHeight;
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-   fitCombinedPrintPages();
-   requestAnimationFrame(()=>setTimeout(()=>{
-    try{window.print()}catch(error){console.error('No fue posible abrir la impresion:',error);restore();}
-   },300));
-  }));
- });
+ generateIOSCombinedRolePDF(sourceSheets).catch(error=>{
+  console.error('No fue posible generar el PDF combinado:',error);
+  flash('No fue posible generar el PDF. Verifica tu conexión e inténtalo nuevamente.');
+ }).finally(()=>{combinedPrintInProgress=false});
 }
 function showRoleView(v){roleView=v;$('playerRoleView').style.display=v==='player'?'block':'none';$('courtRoleView').style.display=v==='court'?'block':'none'}
 function renderSchedule(){const summary=$('scheduleSummary'), ps=$('playerSchedule'), cards=$('roundCards');if(!state.rounds.length){summary.innerHTML='';ps.innerHTML='<div class="empty">Todavía no se ha generado un rol.</div>';cards.innerHTML='';return}summary.innerHTML=`<div class="kpis"><div class="kpi"><b>${state.players.length}</b>Jugadores</div><div class="kpi"><b>${state.rounds.length}</b>Rondas</div><div class="kpi"><b>${Math.max(...state.rounds.map(r=>r.matches.length))}</b>Canchas máx.</div><div class="kpi"><b>${state.config.minutes}</b>Minutos</div></div>`;
@@ -1344,7 +1176,7 @@ if ('serviceWorker' in navigator) { window.addEventListener('load', () => naviga
 </script>
 <!-- v41.5: Clasificación móvil a ancho completo sin transformaciones de escala. -->
 
-<!-- v41.8: horarios de rondas en blanco en el encabezado del Rol por Jugador. -->
+<!-- v42.1: Clasificacion utiliza el mismo flujo PDF de Rol con html2canvas y jsPDF en todos los dispositivos. -->
 </body></html>
 
 <!-- v39.5 rebuilt directly from v38.7; capture modal and review table structure preserved. -->
