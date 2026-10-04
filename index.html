@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Reta Pádel Individual v42.2</title>
+<title>Reta Pádel Individual v42.3</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="turbo-icono.png">  
 <meta name="theme-color" content="#123A63">
@@ -980,7 +980,7 @@ function roundTimeRange(r){const roundNumber=typeof r==='object'&&r!==null?Numbe
 function timeFor(r){return roundTimeRange(r)}
 function courtName(n){return state.config['court'+n]||'Cancha '+n}
 let roleView='player';
-/* v42.2 - Diagnostico de Web Share para Android/Chrome sin ventana adicional; conserva el flujo PDF unificado de v42.1. */
+/* v42.3 - Ventana intermedia mejorada para compartir PDF en Android/Chrome instalado como PWA. */
 function isIOSDevice(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
 function pdfLibrariesReady(){return typeof window.html2canvas==='function'&&window.jspdf&&typeof window.jspdf.jsPDF==='function'}
 async function waitForPdfAssets(root){
@@ -1000,11 +1000,72 @@ async function canvasForIOSPdf(source){
  const {host,clone}=prepareIOSPdfClone(source);
  try{await waitForPdfAssets(clone);void clone.offsetHeight;return await html2canvas(clone,{scale:3,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:1054})}finally{host.remove()}
 }
+function isAndroidStandalone(){
+ const android=/Android/i.test(navigator.userAgent);
+ const standalone=window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches;
+ const legacyStandalone=navigator.standalone===true;
+ return android&&(standalone||legacyStandalone);
+}
+function sharePdfFromAndroidDialog(file,url,filename){
+ return new Promise(resolve=>{
+  const overlay=document.createElement('div');
+  overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-labelledby','pdfShareDialogTitle');
+  Object.assign(overlay.style,{position:'fixed',inset:'0',zIndex:'10050',display:'flex',alignItems:'center',justifyContent:'center',padding:'18px',background:'rgba(5,18,40,.72)',backdropFilter:'blur(4px)'});
+
+  const dialog=document.createElement('div');
+  Object.assign(dialog.style,{position:'relative',width:'min(390px,100%)',background:'#fff',border:'1px solid #D8E3F0',borderRadius:'18px',padding:'26px 22px 22px',boxShadow:'0 24px 70px rgba(0,0,0,.32)',color:'#15263A',textAlign:'center'});
+
+  const close=document.createElement('button');
+  close.type='button';close.setAttribute('aria-label','Cerrar');close.textContent='×';
+  Object.assign(close.style,{position:'absolute',right:'10px',top:'8px',width:'38px',height:'38px',border:'0',borderRadius:'999px',background:'transparent',color:'#64748B',fontSize:'28px',lineHeight:'1',cursor:'pointer'});
+
+  const icon=document.createElement('div');icon.textContent='✓';
+  Object.assign(icon.style,{display:'grid',placeItems:'center',width:'54px',height:'54px',margin:'0 auto 14px',borderRadius:'999px',background:'#EAF3FF',color:'#174F8A',fontSize:'28px',fontWeight:'900'});
+
+  const title=document.createElement('h3');title.id='pdfShareDialogTitle';title.textContent='PDF generado correctamente';
+  Object.assign(title.style,{margin:'0 0 8px',fontSize:'21px',color:'#15263A'});
+
+  const message=document.createElement('p');message.textContent='El archivo está listo. Toca el botón para abrir las opciones de compartir de Android.';
+  Object.assign(message.style,{margin:'0 0 20px',color:'#64748B',fontSize:'14px',lineHeight:'1.45'});
+
+  const share=document.createElement('button');share.type='button';share.className='btn';share.textContent='Compartir PDF';
+  Object.assign(share.style,{width:'100%',minHeight:'48px',fontSize:'16px'});
+
+  let finished=false;
+  const finish=(revokeNow=false)=>{if(finished)return;finished=true;if(revokeNow)URL.revokeObjectURL(url);overlay.remove();resolve()};
+  close.addEventListener('click',()=>finish(true),{once:true});
+  overlay.addEventListener('click',event=>{if(event.target===overlay)finish(true)});
+  share.addEventListener('click',async()=>{
+   share.disabled=true;share.textContent='Abriendo opciones...';
+   try{
+    await navigator.share({files:[file],title:filename});
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+    finish(false);
+   }catch(error){
+    console.error('navigator.share error:',error?.name,error?.message,error);
+    share.disabled=false;share.textContent='Compartir PDF';
+    if(error&&error.name==='AbortError')return;
+    flash('No fue posible abrir las opciones de compartir. Inténtalo nuevamente.');
+   }
+  });
+
+  dialog.append(close,icon,title,message,share);overlay.appendChild(dialog);document.body.appendChild(overlay);share.focus();
+ });
+}
 async function openIOSPdf(pdf,filename){
  const blob=pdf.output('blob');
  const url=URL.createObjectURL(blob);
  const file=(typeof File==='function')?new File([blob],filename,{type:'application/pdf'}):null;
- if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+ const canShareFile=!!(file&&navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}));
+
+ if(isAndroidStandalone()&&canShareFile){
+  await sharePdfFromAndroidDialog(file,url,filename);
+  return;
+ }
+
+ if(canShareFile){
   try{
    await navigator.share({files:[file],title:filename});
    setTimeout(()=>URL.revokeObjectURL(url),60000);
@@ -1017,15 +1078,10 @@ async function openIOSPdf(pdf,filename){
    }
   }
  }
+
  const opened=window.open(url,'_blank');
  if(!opened){
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=filename;
-  a.target='_blank';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  const a=document.createElement('a');a.href=url;a.download=filename;a.target='_blank';document.body.appendChild(a);a.click();a.remove();
  }
  setTimeout(()=>URL.revokeObjectURL(url),120000);
 }
@@ -1195,7 +1251,7 @@ if ('serviceWorker' in navigator) { window.addEventListener('load', () => naviga
 </script>
 <!-- v41.5: Clasificación móvil a ancho completo sin transformaciones de escala. -->
 
-<!-- v42.2: Diagnostico de navigator.share sin ventana adicional; conserva el flujo PDF unificado de v42.1. -->
+<!-- v42.3: Android/Chrome standalone usa una interaccion adicional para abrir Web Share de forma confiable. -->
 </body></html>
 
 <!-- v39.5 rebuilt directly from v38.7; capture modal and review table structure preserved. -->
